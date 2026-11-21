@@ -1,0 +1,56 @@
+name: Build Jamio iOS IPA
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Capacitor iOS
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/ios
+          npx cap init "Jamio" "com.jamio.music" --web-dir "preview"
+          npx cap add ios
+          npx cap sync ios
+
+      - name: Build Archive with Xcode
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace \
+                     -scheme App \
+                     -configuration Release \
+                     -destination 'generic/platform=iOS' \
+                     -archivePath App.xcarchive \
+                     archive \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO
+
+      - name: Package Payload into IPA
+        run: |
+          mkdir -p build_output/Payload
+          cp -r ios/App/App.xcarchive/Products/Applications/App.app build_output/Payload/Jamio.app
+          cd build_output
+          zip -r Jamio.ipa Payload
+          echo "IPA Size:"
+          ls -lh Jamio.ipa
+
+      - name: Upload Jamio IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Jamio-Universal-iOS-IPA
+          path: build_output/Jamio.ipa
+          retention-days: 30
+
