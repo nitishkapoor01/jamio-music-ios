@@ -20,9 +20,12 @@ jobs:
       - name: Setup Capacitor iOS
         run: |
           npm init -y
-          npm install @capacitor/core @capacitor/cli @capacitor/ios
+          npm install @capacitor/core@5.7.4 @capacitor/cli@5.7.4 @capacitor/ios@5.7.4
           npx cap init "Jamio" "com.jamio.music" --web-dir "preview"
           npx cap add ios
+          cd ios/App
+          pod install
+          cd ../..
           npx cap sync ios
 
       - name: Build Archive with Xcode
@@ -53,4 +56,3 @@ jobs:
           name: Jamio-Universal-iOS-IPA
           path: build_output/Jamio.ipa
           retention-days: 30
-
