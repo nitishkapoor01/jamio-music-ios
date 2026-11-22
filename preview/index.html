@@ -2015,11 +2015,12 @@
 
         /* Modals & Bottom Sheets */
         .modal-overlay {
-            position: absolute;
+            position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 50;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            z-index: 500;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -2115,26 +2116,47 @@
 
         /* Add to Playlist Bottom Sheet */
         .bottom-sheet {
-            position: absolute;
+            position: fixed;
             left: 0;
             right: 0;
             bottom: 0;
-            background: #1f1f1f;
-            border-top-left-radius: 24px;
-            border-top-right-radius: 24px;
-            padding: 20px;
-            z-index: 60;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7);
+            background: rgba(22, 17, 36, 0.96);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border-top-left-radius: 26px;
+            border-top-right-radius: 26px;
+            padding: 20px 20px calc(var(--safe-bottom) + 20px) 20px;
+            z-index: 450;
+            border-top: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.85);
             display: flex;
             flex-direction: column;
             gap: 14px;
-            transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
+            transform: translate3d(0, 100%, 0);
+            transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .bottom-sheet.open {
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
+        }
+
+        .sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 440;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .sheet-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .sheet-pill {
@@ -3613,7 +3635,8 @@
         </div>
     </div>
 
-    <!-- Add to Playlist Bottom Sheet -->
+    <!-- Add to Playlist Backdrop & Bottom Sheet -->
+    <div class="sheet-backdrop" id="sheetBackdrop" onclick="closeAddToPlaylistSheet()"></div>
     <div class="bottom-sheet" id="addToPlaylistSheet">
         <div class="sheet-pill"></div>
         <div style="font-size: 15px; font-weight: 800; margin-bottom: 2px;">Add to Playlist</div>
@@ -7174,26 +7197,43 @@
 
     // Add to Playlist Sheet
     function openAddToPlaylistSheet(songId) {
-        const song = findSongAcrossPlaylists(songId);
-        if (!song) return;
+        let song = null;
+        if (songId) {
+            song = findSongAcrossPlaylists(songId);
+        }
+        if (!song && currentPlaylist && currentIndex >= 0) {
+            const cur = currentPlaylist[currentIndex];
+            if (cur && (!songId || String(cur.id) === String(songId))) {
+                song = cur;
+            }
+        }
+        if (!song && songForSheet) {
+            song = songForSheet;
+        }
+        if (!song) {
+            showToast('Please select a song first');
+            return;
+        }
         songForSheet = song;
 
-        document.getElementById('sheetSongName').innerText = `Add "${song.title}" to:`;
+        const nameEl = document.getElementById('sheetSongName');
+        if (nameEl) nameEl.innerText = `Add "${song.title}" to:`;
         const listContainer = document.getElementById('sheetPlaylistsList');
+        if (!listContainer) return;
         listContainer.innerHTML = '';
 
-        if (userPlaylists.length === 0) {
-            listContainer.innerHTML = '<div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:12px 0;">No playlists created yet. Tap "Create New Playlist" above!</div>';
+        if (!userPlaylists || userPlaylists.length === 0) {
+            listContainer.innerHTML = '<div style="font-size:12px; color:var(--text-secondary); text-align:center; padding:16px 0;">No playlists created yet. Tap "Create New Playlist" above!</div>';
         } else {
             userPlaylists.forEach(pl => {
-                const alreadyIn = pl.songs.some(s => s.id === song.id);
+                const alreadyIn = (pl.songs || []).some(s => String(s.id) === String(song.id));
                 const div = document.createElement('div');
                 div.className = 'playlist-select-item';
-                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background:rgba(255,255,255,0.05); border-radius:12px; cursor:pointer; margin-bottom:6px;';
+                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:12px 14px; background:rgba(255,255,255,0.06); border-radius:14px; cursor:pointer; margin-bottom:8px; border:1px solid rgba(255,255,255,0.07); transition:all 0.2s ease;';
                 div.innerHTML = `
                     <div>
                         <div style="font-size:14px; font-weight:700; color:#fff;">${pl.name}</div>
-                        <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${pl.songs.length} tracks</div>
+                        <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">${(pl.songs || []).length} tracks</div>
                     </div>
                     <span style="font-size:12px; font-weight:700; color:${alreadyIn ? '#34d399' : '#c084fc'}; display:flex; align-items:center; gap:6px;">
                         <i class="fa-solid ${alreadyIn ? 'fa-check' : 'fa-plus'}"></i> ${alreadyIn ? 'Added' : 'Add'}
@@ -7201,9 +7241,12 @@
                 `;
                 div.onclick = () => {
                     if (alreadyIn) {
-                        pl.songs = pl.songs.filter(s => s.id !== song.id);
+                        pl.songs = (pl.songs || []).filter(s => String(s.id) !== String(song.id));
+                        showToast(`Removed from "${pl.name}"`);
                     } else {
+                        if (!pl.songs) pl.songs = [];
                         pl.songs.push(song);
+                        showToast(`✓ Added to "${pl.name}"!`);
                     }
                     localStorage.setItem('jamio_user_playlists', JSON.stringify(userPlaylists));
                     openAddToPlaylistSheet(song.id);
@@ -7211,25 +7254,39 @@
                     if (activeDetailPlaylistId === pl.id) {
                         openPlaylistView(pl.id);
                     }
+                    syncStorageToNative();
                 };
                 listContainer.appendChild(div);
             });
         }
 
-        document.getElementById('addToPlaylistSheet').classList.add('open');
+        const sheet = document.getElementById('addToPlaylistSheet');
+        const backdrop = document.getElementById('sheetBackdrop');
+        if (sheet) sheet.classList.add('open');
+        if (backdrop) backdrop.classList.add('open');
     }
 
     function closeAddToPlaylistSheet() {
-        document.getElementById('addToPlaylistSheet').classList.remove('open');
+        const sheet = document.getElementById('addToPlaylistSheet');
+        const backdrop = document.getElementById('sheetBackdrop');
+        if (sheet) sheet.classList.remove('open');
+        if (backdrop) backdrop.classList.remove('open');
     }
-    document.getElementById('btnCloseSheet').onclick = closeAddToPlaylistSheet;
+    const btnCloseSheet = document.getElementById('btnCloseSheet');
+    if (btnCloseSheet) btnCloseSheet.onclick = closeAddToPlaylistSheet;
 
     // Full Player "Add to playlist" button
-    document.getElementById('fullAddPlaylistBtn').onclick = () => {
-        if (currentIndex >= 0 && currentPlaylist[currentIndex]) {
-            openAddToPlaylistSheet(currentPlaylist[currentIndex].id);
-        }
-    };
+    const fullAddPlBtn = document.getElementById('fullAddPlaylistBtn');
+    if (fullAddPlBtn) {
+        fullAddPlBtn.onclick = (e) => {
+            if (e) e.stopPropagation();
+            if (currentIndex >= 0 && currentPlaylist[currentIndex]) {
+                openAddToPlaylistSheet(currentPlaylist[currentIndex].id);
+            } else {
+                showToast('Play a song first');
+            }
+        };
+    }
 
     // Create New Playlist Modal
     document.getElementById('btnCreatePlaylistModal').onclick = () => {
@@ -7252,7 +7309,9 @@
         userPlaylists.push(newPl);
         localStorage.setItem('jamio_user_playlists', JSON.stringify(userPlaylists));
         document.getElementById('createPlaylistModal').style.display = 'none';
+        showToast(`Playlist "${name}" created!`);
         renderPlaylistsTab();
+        syncStorageToNative();
         if (songForSheet) {
             openAddToPlaylistSheet(songForSheet.id);
         }
