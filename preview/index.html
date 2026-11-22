@@ -4787,14 +4787,19 @@
                 const existingIds = new Set(currentPlaylist.map(s => String(s.id)));
                 const playedIds = window.playedTrackIds || new Set();
                 const playedTitles = window.playedTrackTitles || new Set();
-                const newRecs = data.results.filter(r => {
+                let newRecs = data.results.filter(r => {
                     const rId = String(r.id);
                     const norm = (r.title || '').toLowerCase().replace(/\s*[\(\[].*?[\)\]]/g, '').trim();
                     return !existingIds.has(rId) && !playedIds.has(rId) && !playedTitles.has(norm);
                 });
+                // If strict unseen filter yielded 0, fall back to any track not currently in currentPlaylist
+                if (newRecs.length === 0) {
+                    newRecs = data.results.filter(r => !existingIds.has(String(r.id)));
+                }
                 if (newRecs.length > 0) {
                     currentPlaylist.push(...newRecs);
                     registerKnownSongs(newRecs);
+                    if (typeof updateQueueCountBadge === 'function') updateQueueCountBadge();
                     const drawer = document.getElementById('erasTracklistDrawer');
                     if (drawer && drawer.style.display !== 'none') {
                         renderErasTracklistDrawer();
@@ -5098,12 +5103,61 @@
         }
     }
 
+    // Robust Continuous Autoplay Engine & Track Navigation
+    function playNextTrack() {
+        if (!currentPlaylist || currentPlaylist.length === 0) return;
+
+        let nextIdx = currentIndex + 1;
+        if (nextIdx >= currentPlaylist.length) {
+            if (repeatMode === 'all' || currentPlaylist.length > 1) {
+                nextIdx = 0;
+            } else {
+                // If queue only has 1 song, replenish with a different known or recent track
+                const candidates = (userTasteProfile && userTasteProfile.recentPlays && userTasteProfile.recentPlays.length > 0)
+                    ? userTasteProfile.recentPlays
+                    : Array.from(allKnownSongsMap.values());
+                const curId = currentPlaylist[0] ? String(currentPlaylist[0].id) : '';
+                const altSong = candidates.find(s => s && String(s.id) !== curId);
+                if (altSong) {
+                    currentPlaylist.push(altSong);
+                    registerKnownSongs(altSong);
+                    nextIdx = currentPlaylist.length - 1;
+                } else {
+                    // Loop the single track seamlessly
+                    audio.currentTime = 0;
+                    audio.play().catch(e => console.log('Single track repeat error:', e));
+                    return;
+                }
+            }
+        }
+
+        playTrack(nextIdx, currentPlaylist);
+
+        // Pre-fetch next recommendations in background so queue is never empty
+        const nextTrk = currentPlaylist[nextIdx];
+        if (nextTrk) {
+            fetchAndQueueVibeRadio(nextTrk);
+        }
+    }
+
+    function playPrevTrack() {
+        if (!currentPlaylist || currentPlaylist.length === 0) return;
+        if (audio.currentTime > 3) {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+            return;
+        }
+        const total = currentPlaylist.length;
+        const prevIdx = (currentIndex - 1 + total) % total;
+        playTrack(prevIdx, currentPlaylist);
+    }
+
     function skipNext() {
-        slideNext();
+        playNextTrack();
     }
 
     function skipPrev() {
-        slidePrev();
+        playPrevTrack();
     }
 
     // ==========================================
@@ -5705,9 +5759,9 @@
     audio.onended = () => {
         if (repeatMode === 'one') {
             audio.currentTime = 0;
-            audio.play();
+            audio.play().catch(e => console.log('Repeat error:', e));
         } else {
-            skipNext();
+            playNextTrack();
         }
     };
 
