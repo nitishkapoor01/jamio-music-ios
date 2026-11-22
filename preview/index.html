@@ -3201,6 +3201,12 @@
     let isPlaying = false;
     let isOfflineMode = false;
     let isAutoplay = true;
+    let repeatMode = 'off'; // 'off' | 'all' | 'one'
+    let isShuffle = false;
+
+    // Expose core audio state and navigation to window for external/bridge access
+    window.currentPlaylist = currentPlaylist;
+    window.currentIndex = currentIndex;
 
     // ==========================================
     // STANDALONE CLIENT-SIDE JIOSAAVN API ENGINE
@@ -4406,6 +4412,8 @@
     function playTrack(index, list = currentPlaylist, autoExpand = false, isPlaylistContext = false) {
         currentPlaylist = list;
         currentIndex = index;
+        window.currentPlaylist = currentPlaylist;
+        window.currentIndex = currentIndex;
         const track = currentPlaylist[currentIndex];
         if (!track) return;
 
@@ -6798,6 +6806,34 @@
     document.getElementById('miniNextBtn').onclick = skipNext;
     document.getElementById('btnNext').onclick = skipNext;
     document.getElementById('btnPrev').onclick = skipPrev;
+
+    const btnRepeat = document.getElementById('btnRepeat');
+    if (btnRepeat) {
+        btnRepeat.onclick = () => {
+            if (repeatMode === 'off') {
+                repeatMode = 'all';
+                btnRepeat.style.color = 'var(--spotify-green)';
+                showToast('Repeat: All tracks');
+            } else if (repeatMode === 'all') {
+                repeatMode = 'one';
+                btnRepeat.style.color = '#38bdf8';
+                showToast('Repeat: Current track');
+            } else {
+                repeatMode = 'off';
+                btnRepeat.style.color = 'var(--text-secondary)';
+                showToast('Repeat: Off');
+            }
+        };
+    }
+
+    const btnShuffle = document.getElementById('btnShuffle');
+    if (btnShuffle) {
+        btnShuffle.onclick = () => {
+            isShuffle = !isShuffle;
+            btnShuffle.style.color = isShuffle ? 'var(--spotify-green)' : 'var(--text-secondary)';
+            showToast(isShuffle ? 'Shuffle: On' : 'Shuffle: Off');
+        };
+    }
     document.getElementById('fullDownloadBtn').onclick = () => {
         if (currentIndex >= 0 && currentPlaylist[currentIndex]) {
             toggleDownload(currentPlaylist[currentIndex].id);
