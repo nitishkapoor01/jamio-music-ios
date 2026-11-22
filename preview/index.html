@@ -2650,9 +2650,227 @@
             color: #f87171;
         }
 
+        /* ==========================================================================
+           JAMIO - GLOBAL LIKE BUTTON UPGRADE (Apple-Grade Spring Animation & Glow)
+           ========================================================================== */
+        .jamio-like-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 10px;
+            outline: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .jamio-like-btn:hover {
+            transform: scale(1.08);
+        }
+
+        .jamio-like-btn:active {
+            transform: scale(0.92);
+        }
+
+        .jamio-like-svg {
+            width: 19px;
+            height: 19px;
+            display: block;
+            overflow: visible;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+        }
+
+        .jamio-like-path {
+            fill: transparent;
+            stroke: rgba(255, 255, 255, 0.5);
+            stroke-width: 2px;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            transition: fill 0.22s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .jamio-like-btn:hover .jamio-like-path {
+            stroke: #c084fc;
+        }
+
+        .jamio-like-btn.liked .jamio-like-path {
+            fill: url(#jamioLikeGradient);
+            stroke: url(#jamioLikeGradient);
+            stroke-width: 1.2px;
+        }
+
+        .jamio-like-btn.liked .jamio-like-svg {
+            filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)) drop-shadow(0 0 14px rgba(192, 132, 252, 0.4));
+        }
+
+        /* Spring Bounce on Like */
+        .jamio-like-btn.is-animating-like .jamio-like-svg {
+            animation: jamioSpringBounce 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.45) forwards;
+        }
+
+        @keyframes jamioSpringBounce {
+            0% {
+                transform: scale(1);
+            }
+            20% {
+                transform: scale(0.72);
+            }
+            45% {
+                transform: scale(1.35);
+                filter: drop-shadow(0 0 16px rgba(168, 85, 247, 0.98)) drop-shadow(0 0 28px rgba(192, 132, 252, 0.7));
+            }
+            70% {
+                transform: scale(0.94);
+            }
+            85% {
+                transform: scale(1.08);
+            }
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)) drop-shadow(0 0 14px rgba(192, 132, 252, 0.4));
+            }
+        }
+
+        /* Unlike smooth shrink */
+        .jamio-like-btn.is-animating-unlike .jamio-like-svg {
+            animation: jamioShrinkUnlike 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+        }
+
+        @keyframes jamioShrinkUnlike {
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7));
+            }
+            40% {
+                transform: scale(0.72);
+                filter: none;
+            }
+            80% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                filter: none;
+            }
+        }
+
+        /* Subtle Purple Circular Ripple Wave */
+        .jamio-like-ripple {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .jamio-like-btn.is-animating-like .jamio-like-ripple {
+            animation: jamioRipplePulse 0.5s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes jamioRipplePulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.4);
+                box-shadow: 0 0 0 1.5px rgba(216, 180, 254, 0.95), inset 0 0 10px rgba(168, 85, 247, 0.6);
+                opacity: 0.95;
+            }
+            50% {
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2.6);
+                box-shadow: 0 0 24px 8px rgba(168, 85, 247, 0), inset 0 0 2px rgba(168, 85, 247, 0);
+                opacity: 0;
+            }
+        }
+
+        /* Tiny Particles / Sparkles Burst */
+        .jamio-like-particles {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .jamio-like-particles .p {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f0abfc 0%, #a855f7 100%);
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0);
+            box-shadow: 0 0 6px #c084fc;
+        }
+
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p1 { animation: burstP1 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p2 { animation: burstP2 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p3 { animation: burstP3 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p4 { animation: burstP4 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p5 { animation: burstP5 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p6 { animation: burstP6 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p7 { animation: burstP7 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+        .jamio-like-btn.is-animating-like .jamio-like-particles .p8 { animation: burstP8 0.55s cubic-bezier(0.12, 0.8, 0.25, 1) forwards; }
+
+        @keyframes burstP1 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(13px, -17px) scale(0); } }
+        @keyframes burstP2 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(21px, -5px) scale(0); } }
+        @keyframes burstP3 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(17px, 15px) scale(0); } }
+        @keyframes burstP4 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(0px, 20px) scale(0); } }
+        @keyframes burstP5 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(-17px, 15px) scale(0); } }
+        @keyframes burstP6 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(-21px, -5px) scale(0); } }
+        @keyframes burstP7 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(-13px, -17px) scale(0); } }
+        @keyframes burstP8 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.4); } 100% { opacity: 0; transform: translate(0px, -22px) scale(0); } }
+
+        /* Specific Button Size Overrides */
+        .mini-btn-like.jamio-like-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+        }
+        .mini-btn-like.jamio-like-btn .jamio-like-svg {
+            width: 17px;
+            height: 17px;
+        }
+
+        #fullLikeBtn.jamio-like-btn {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+        }
+        #fullLikeBtn.jamio-like-btn .jamio-like-svg {
+            width: 22px;
+            height: 22px;
+        }
+
     </style>
 </head>
 <body>
+
+<!-- Global Jamio SVG Linear Gradient Defs for Like Buttons & Glows -->
+<svg style="position: absolute; width: 0; height: 0; overflow: hidden; pointer-events: none;" aria-hidden="true">
+    <defs>
+        <linearGradient id="jamioLikeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#f0abfc" />
+            <stop offset="40%" stop-color="#c084fc" />
+            <stop offset="75%" stop-color="#a855f7" />
+            <stop offset="100%" stop-color="#7c3aed" />
+        </linearGradient>
+    </defs>
+</svg>
 
 <div class="device-wrapper">
     <!-- Fluid Ambient Background Orbs -->
@@ -2910,7 +3128,16 @@
                     <div class="mini-eq-bar"></div>
                     <div class="mini-eq-bar"></div>
                 </div>
-                <button class="mini-btn-like" id="miniLikeBtn" title="Favorite Song"><i class="fa-regular fa-heart"></i></button>
+                <button class="mini-btn-like jamio-like-btn" id="miniLikeBtn" title="Favorite Song" aria-label="Favorite Song">
+                    <span class="jamio-like-ripple"></span>
+                    <span class="jamio-like-particles">
+                        <span class="p p1"></span><span class="p p2"></span><span class="p p3"></span><span class="p p4"></span>
+                        <span class="p p5"></span><span class="p p6"></span><span class="p p7"></span><span class="p p8"></span>
+                    </span>
+                    <svg class="jamio-like-svg" viewBox="0 0 24 24">
+                        <path class="jamio-like-path" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                </button>
                 <button class="mini-btn-play" id="miniPlayBtn" title="Play / Pause"><i class="fa-solid fa-play"></i></button>
                 <button class="mini-btn-next" id="miniNextBtn" title="Next Song"><i class="fa-solid fa-forward-step"></i></button>
             </div>
@@ -2990,8 +3217,15 @@
                     <span class="eras-album-name" id="erasAlbumName">Midnight Era</span>
                 </div>
                 <div class="eras-bar-actions">
-                    <button class="btn-action" id="fullLikeBtn" title="Favorite Song" style="font-size: 19px; margin-right: 6px;">
-                        <i class="fa-regular fa-heart"></i>
+                    <button class="btn-action jamio-like-btn" id="fullLikeBtn" title="Favorite Song" aria-label="Favorite Song" style="margin-right: 6px;">
+                        <span class="jamio-like-ripple"></span>
+                        <span class="jamio-like-particles">
+                            <span class="p p1"></span><span class="p p2"></span><span class="p p3"></span><span class="p p4"></span>
+                            <span class="p p5"></span><span class="p p6"></span><span class="p p7"></span><span class="p p8"></span>
+                        </span>
+                        <svg class="jamio-like-svg" viewBox="0 0 24 24">
+                            <path class="jamio-like-path" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
                     </button>
                     <button class="btn-action" id="fullAddQueueBtn" onclick="addToQueue(event, currentPlaylist[currentIndex])" title="Add to Queue" style="font-size: 16px; margin-right: 6px; color: #38bdf8; position: relative;">
                         <i class="fa-solid fa-list-check"></i>
@@ -4462,6 +4696,20 @@
         updateClock();
     }
 
+    // Reusable Jamio Animated Like Button Inner Structure
+    function getJamioLikeButtonInner() {
+        return `
+            <span class="jamio-like-ripple"></span>
+            <span class="jamio-like-particles">
+                <span class="p p1"></span><span class="p p2"></span><span class="p p3"></span><span class="p p4"></span>
+                <span class="p p5"></span><span class="p p6"></span><span class="p p7"></span><span class="p p8"></span>
+            </span>
+            <svg class="jamio-like-svg" viewBox="0 0 24 24">
+                <path class="jamio-like-path" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+        `;
+    }
+
     // Render Song Item Row Component
     function createSongRow(song, idx, list, contextPlaylistId = null) {
         const isDownloaded = downloadedSongs.some(s => s.id === song.id);
@@ -4491,8 +4739,8 @@
                 <button class="btn-action ${isDownloaded ? 'active' : ''}" onclick="toggleDownload('${song.id}')" title="Download for Offline">
                     <i class="fa-solid ${isDownloaded ? 'fa-circle-check' : 'fa-circle-down'}"></i>
                 </button>
-                <button class="btn-action ${isLiked ? 'liked' : ''}" onclick="toggleLike('${song.id}')">
-                    <i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i>
+                <button class="btn-action jamio-like-btn ${isLiked ? 'liked' : ''}" data-song-id="${song.id}" onclick="toggleLike('${song.id}', this, event)" title="${isLiked ? 'Unlike' : 'Favorite'}" aria-label="${isLiked ? 'Unlike' : 'Favorite'}">
+                    ${getJamioLikeButtonInner()}
                 </button>
             `;
         } else {
@@ -4506,8 +4754,8 @@
                 <button class="btn-action ${isDownloaded ? 'active' : ''}" onclick="toggleDownload('${song.id}')" title="Download for Offline">
                     <i class="fa-solid ${isDownloaded ? 'fa-circle-check' : 'fa-circle-down'}"></i>
                 </button>
-                <button class="btn-action ${isLiked ? 'liked' : ''}" onclick="toggleLike('${song.id}')">
-                    <i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart"></i>
+                <button class="btn-action jamio-like-btn ${isLiked ? 'liked' : ''}" data-song-id="${song.id}" onclick="toggleLike('${song.id}', this, event)" title="${isLiked ? 'Unlike' : 'Favorite'}" aria-label="${isLiked ? 'Unlike' : 'Favorite'}">
+                    ${getJamioLikeButtonInner()}
                 </button>
             `;
         }
@@ -4695,12 +4943,8 @@
             if (miniImg) miniImg.classList.remove('mini-switching');
         }, 140);
 
-        const isLiked = likedSongs.includes(track.id);
-        const miniLike = document.getElementById('miniLikeBtn');
-        if (miniLike) {
-            miniLike.innerHTML = `<i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart" style="${isLiked ? 'color:#ec4899' : ''}"></i>`;
-            miniLike.classList.toggle('liked', isLiked);
-        }
+        const isLiked = likedSongs.some(id => String(id) === String(track.id));
+        updateLikeButtonIcon(isLiked);
 
         // Compute Previous and Next Tracks for 3D Carousel Stage
         const total = currentPlaylist.length;
@@ -5037,12 +5281,8 @@
         const miniArtistEl = document.getElementById('miniArtist');
         if (miniArtistEl) miniArtistEl.innerText = track.artist;
 
-        const isLiked = likedSongs.includes(track.id);
-        const miniLike = document.getElementById('miniLikeBtn');
-        if (miniLike) {
-            miniLike.innerHTML = `<i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart" style="${isLiked ? 'color:#ec4899' : ''}"></i>`;
-            miniLike.classList.toggle('liked', isLiked);
-        }
+        const isLiked = likedSongs.some(id => String(id) === String(track.id));
+        updateLikeButtonIcon(isLiked);
 
         // Dynamic Palette Morphing
         const eraPalettes = [
@@ -6206,19 +6446,78 @@
         });
     }
 
-    function toggleLike(songId) {
-        const idx = likedSongs.indexOf(songId);
-        if (idx >= 0) {
+    function toggleLike(songId, clickedBtn = null, event = null) {
+        if (event) {
+            try { event.stopPropagation(); } catch(_){}
+        }
+        if (!songId) return;
+        const strId = String(songId);
+        const idx = likedSongs.findIndex(id => String(id) === strId);
+        const willBeLiked = idx < 0;
+
+        if (willBeLiked) {
+            likedSongs.push(strId);
+            showToast('Added to Liked Songs');
+        } else {
             likedSongs.splice(idx, 1);
             showToast('Removed from Liked Songs');
-        } else {
-            likedSongs.push(songId);
-            showToast('Added to Liked Songs');
         }
         localStorage.setItem('jamio_liked_songs', JSON.stringify(likedSongs));
-        updateLikeButtonIcon(likedSongs.includes(songId));
+
+        // Trigger Apple-Grade Jamio Spring & Particle Animation
+        animateJamioLikeButtons(strId, willBeLiked, clickedBtn);
+
         renderPlaylistsTab();
-        renderSongList('homeSongsList', currentPlaylist);
+        syncStorageToNative();
+
+        if (activeDetailPlaylistId === 'liked' && !willBeLiked) {
+            setTimeout(() => {
+                if (activeDetailPlaylistId === 'liked') openPlaylistView('liked');
+            }, 420);
+        }
+    }
+
+    function animateJamioLikeButtons(songId, willBeLiked, clickedBtn = null) {
+        const strId = String(songId);
+        const buttons = new Set();
+        if (clickedBtn && clickedBtn instanceof HTMLElement) {
+            buttons.add(clickedBtn);
+        }
+
+        // Find all like buttons representing this song across the DOM
+        document.querySelectorAll(`.jamio-like-btn[data-song-id="${strId}"]`).forEach(b => buttons.add(b));
+
+        // If this song is currently playing, also animate full player and mini player
+        const curSong = currentPlaylist[currentIndex];
+        if (curSong && String(curSong.id) === strId) {
+            const fBtn = document.getElementById('fullLikeBtn');
+            if (fBtn) buttons.add(fBtn);
+            const mBtn = document.getElementById('miniLikeBtn');
+            if (mBtn) buttons.add(mBtn);
+        }
+
+        buttons.forEach(btn => {
+            btn.classList.remove('is-animating-like', 'is-animating-unlike');
+            // Force reflow for restartable CSS animation
+            void btn.offsetWidth;
+
+            if (willBeLiked) {
+                btn.classList.add('liked', 'is-animating-like');
+                btn.setAttribute('title', 'Unlike');
+                btn.setAttribute('aria-label', 'Unlike');
+                setTimeout(() => {
+                    btn.classList.remove('is-animating-like');
+                }, 600);
+            } else {
+                btn.classList.remove('liked');
+                btn.classList.add('is-animating-unlike');
+                btn.setAttribute('title', 'Favorite Song');
+                btn.setAttribute('aria-label', 'Favorite Song');
+                setTimeout(() => {
+                    btn.classList.remove('is-animating-unlike');
+                }, 400);
+            }
+        });
     }
 
     function updateDownloadButtonIcon(isDownloaded) {
@@ -6228,11 +6527,16 @@
 
     function updateLikeButtonIcon(isLiked) {
         const btn = document.getElementById('fullLikeBtn');
-        if (btn) btn.innerHTML = `<i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart" style="${isLiked ? 'color:var(--spotify-green)' : ''}"></i>`;
+        if (btn) {
+            btn.classList.toggle('liked', isLiked);
+            btn.setAttribute('title', isLiked ? 'Unlike' : 'Favorite Song');
+            btn.setAttribute('aria-label', isLiked ? 'Unlike' : 'Favorite Song');
+        }
         const miniLike = document.getElementById('miniLikeBtn');
         if (miniLike) {
-            miniLike.innerHTML = `<i class="fa-${isLiked ? 'solid' : 'regular'} fa-heart" style="${isLiked ? 'color:#ec4899' : ''}"></i>`;
             miniLike.classList.toggle('liked', isLiked);
+            miniLike.setAttribute('title', isLiked ? 'Unlike' : 'Favorite Song');
+            miniLike.setAttribute('aria-label', isLiked ? 'Unlike' : 'Favorite Song');
         }
     }
 
@@ -7080,7 +7384,7 @@
         miniLike.onclick = (e) => {
             e.stopPropagation();
             if (currentIndex >= 0 && currentPlaylist[currentIndex]) {
-                toggleLike(currentPlaylist[currentIndex].id);
+                toggleLike(currentPlaylist[currentIndex].id, miniLike, e);
             }
         };
     }
@@ -7121,9 +7425,10 @@
             toggleDownload(currentPlaylist[currentIndex].id);
         }
     };
-    document.getElementById('fullLikeBtn').onclick = () => {
+    document.getElementById('fullLikeBtn').onclick = (e) => {
+        if (e) e.stopPropagation();
         if (currentIndex >= 0 && currentPlaylist[currentIndex]) {
-            toggleLike(currentPlaylist[currentIndex].id);
+            toggleLike(currentPlaylist[currentIndex].id, document.getElementById('fullLikeBtn'), e);
         }
     };
 
