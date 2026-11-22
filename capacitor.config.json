@@ -1,0 +1,16 @@
+{
+  "appId": "com.jamio.music",
+  "appName": "Jamio",
+  "webDir": "preview",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  },
+  "ios": {
+    "contentInset": "always",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true
+  }
+}
