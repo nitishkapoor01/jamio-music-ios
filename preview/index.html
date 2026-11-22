@@ -108,6 +108,17 @@
         .header-left {
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        .app-header-logo-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            object-fit: cover;
+            box-shadow: 0 2px 10px rgba(168, 85, 247, 0.45);
+            display: block;
+            flex-shrink: 0;
         }
 
         .header-logo-text {
@@ -2554,6 +2565,7 @@
     <!-- App Header -->
     <div class="app-header">
         <div class="header-left">
+            <img src="app_logo.png" alt="Jamio" class="app-header-logo-img">
             <span class="header-logo-text">Jamio</span>
         </div>
         <div class="header-badges">
