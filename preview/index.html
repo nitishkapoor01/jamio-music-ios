@@ -1573,7 +1573,7 @@
         @keyframes appleTabIn {
             0% {
                 opacity: 0;
-                transform: scale(0.985) translateY(5px);
+                transform: scale(0.985) translateY(4px);
             }
             100% {
                 opacity: 1;
@@ -1583,14 +1583,13 @@
 
         .view-panel {
             display: none;
-            opacity: 0;
-            transform: scale(0.985) translateY(5px);
-            will-change: opacity, transform;
+            opacity: 1;
         }
 
         .view-panel.active {
             display: block !important;
-            animation: appleTabIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 1 !important;
+            animation: appleTabIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
         /* Apple-Style Floating Queue Notification */
@@ -6211,8 +6210,16 @@
     // Open Playlist Detail
     function openPlaylistView(plId) {
         activeDetailPlaylistId = plId;
-        document.getElementById('playlistsView').style.display = 'none';
-        document.getElementById('playlistDetailView').style.display = 'block';
+        const plView = document.getElementById('playlistsView');
+        const detailView = document.getElementById('playlistDetailView');
+        if (plView) {
+            plView.classList.remove('active');
+            plView.style.display = 'none';
+        }
+        if (detailView) {
+            detailView.style.display = 'block';
+            detailView.classList.add('active');
+        }
         togglePlaylistAddSection(false);
 
         const btnAdd = document.getElementById('btnAddSongsToDetail');
@@ -6263,8 +6270,16 @@
     }
 
     function closePlaylistDetail() {
-        document.getElementById('playlistDetailView').style.display = 'none';
-        document.getElementById('playlistsView').style.display = 'block';
+        const plView = document.getElementById('playlistsView');
+        const detailView = document.getElementById('playlistDetailView');
+        if (detailView) {
+            detailView.classList.remove('active');
+            detailView.style.display = 'none';
+        }
+        if (plView) {
+            plView.style.display = 'block';
+            plView.classList.add('active');
+        }
         if (window.checkFastScrubberVisibility) window.checkFastScrubberVisibility();
     }
 
@@ -6562,9 +6577,7 @@
 
             if (targetPanel) {
                 targetPanel.style.display = 'block';
-                requestAnimationFrame(() => {
-                    targetPanel.classList.add('active');
-                });
+                targetPanel.classList.add('active');
             }
 
             if (tab === 'home') {
