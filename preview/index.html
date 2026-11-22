@@ -4014,6 +4014,29 @@
         }
     };
 
+    // Memory-efficient Base64 to Blob converter
+    function base64ToBlob(b64Data, contentType = 'audio/mp4') {
+        if (!b64Data) return null;
+        try {
+            const cleanB64 = b64Data.includes(',') ? b64Data.split(',')[1] : b64Data;
+            const byteCharacters = atob(cleanB64);
+            const sliceSize = 1024;
+            const byteArrays = [];
+            for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+                const slice = byteCharacters.slice(offset, offset + sliceSize);
+                const byteNumbers = new Uint8Array(slice.length);
+                for (let i = 0; i < slice.length; i++) {
+                    byteNumbers[i] = slice.charCodeAt(i);
+                }
+                byteArrays.push(byteNumbers);
+            }
+            return new Blob(byteArrays, { type: contentType });
+        } catch (e) {
+            console.error('base64ToBlob conversion error:', e);
+            return null;
+        }
+    }
+
     // Helper: Download audio binary as Blob (Native CapacitorHttp on iOS/Android or fetch with fallback)
     async function downloadAudioBlob(audioUrl) {
         if (!audioUrl) return null;
@@ -4028,13 +4051,7 @@
                 if (res && res.data) {
                     if (res.data instanceof Blob) return res.data;
                     if (typeof res.data === 'string') {
-                        const byteCharacters = atob(res.data);
-                        const byteNumbers = new Array(byteCharacters.length);
-                        for (let i = 0; i < byteCharacters.length; i++) {
-                            byteNumbers[i] = byteCharacters.charCodeAt(i);
-                        }
-                        const byteArray = new Uint8Array(byteNumbers);
-                        return new Blob([byteArray], { type: 'audio/mp4' });
+                        return base64ToBlob(res.data, 'audio/mp4');
                     }
                 }
             } catch (e) {
@@ -5192,6 +5209,21 @@
             try {
                 blob = await JamioAudioDB.getTrackBlob(track.id);
             } catch (_) {}
+
+            // On Android: if not in IndexedDB yet, check if downloaded to native storage and retrieve Base64
+            if (!blob && isAndroid && window.AndroidBridge && typeof window.AndroidBridge.getDownloadedSongBase64 === 'function') {
+                try {
+                    const b64 = window.AndroidBridge.getDownloadedSongBase64(track.id);
+                    if (b64 && b64.length > 1000) {
+                        blob = base64ToBlob(b64, 'audio/mp4');
+                        if (blob) {
+                            JamioAudioDB.saveTrackAudio(track.id, blob, track).catch(() => {});
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Android native disk audio retrieval error:', e);
+                }
+            }
 
             if (blob && blob.size > 1024) {
                 audio.src = URL.createObjectURL(blob);
@@ -6810,8 +6842,24 @@
 
             showToast(`Downloading "${song.title}" for offline listening...`);
 
-            if (song.audioUrl) {
-                downloadAudioBlob(song.audioUrl)
+            // Dynamically resolve audioUrl if missing or empty
+            let activeAudioUrl = song.audioUrl;
+            if (!activeAudioUrl || activeAudioUrl === window.location.href || activeAudioUrl.endsWith('/')) {
+                try {
+                    const hits = await clientSaavnSearch(`${song.title} ${song.artist}`, 1);
+                    if (hits && hits.length > 0 && hits[0].audioUrl) {
+                        activeAudioUrl = hits[0].audioUrl;
+                        song.audioUrl = activeAudioUrl;
+                        offlineItem.audioUrl = activeAudioUrl;
+                        if (!song.coverUrl) song.coverUrl = hits[0].coverUrl;
+                    }
+                } catch (e) {
+                    console.warn('Audio url resolution in toggleDownload error:', e);
+                }
+            }
+
+            if (activeAudioUrl) {
+                downloadAudioBlob(activeAudioUrl)
                     .then(blob => {
                         if (blob && blob.size > 1024) {
                             return JamioAudioDB.saveTrackAudio(strId, blob, song);
@@ -6833,7 +6881,7 @@
                     song.title || 'Unknown Title',
                     song.artist || 'Unknown Artist',
                     song.album || '',
-                    song.audioUrl || '',
+                    activeAudioUrl || '',
                     song.coverUrl || ''
                 );
             }
@@ -6848,12 +6896,20 @@
         syncStorageToNative();
     }
 
-    window.onNativeDownloadResult = function(songId, success) {
+    window.onNativeDownloadResult = function(songId, success, base64Audio) {
         const song = findSongAcrossPlaylists(songId);
         const songTitle = song ? song.title : 'Song';
         const strId = String(songId);
 
         if (success) {
+            if (base64Audio && base64Audio.length > 1000) {
+                const blob = base64ToBlob(base64Audio, 'audio/mp4');
+                if (blob) {
+                    JamioAudioDB.saveTrackAudio(strId, blob, song).then(() => {
+                        console.log('Saved native Android audio to JamioAudioDB:', strId);
+                    }).catch(e => console.warn('JamioAudioDB error:', e));
+                }
+            }
             showToast(`✓ "${songTitle}" ready for offline listening!`);
             updateDownloadButtonIcon(downloadedSongs.some(s => String(s.id) === strId));
             renderDownloadsTab();
