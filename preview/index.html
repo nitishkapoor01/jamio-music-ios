@@ -3080,6 +3080,26 @@
         @keyframes qBurstP5 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 100% { opacity: 0; transform: translate(-18px, -2px) scale(0); } }
         @keyframes qBurstP6 { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); } 100% { opacity: 0; transform: translate(-10px, -15px) scale(0); } }
 
+        /* Persistent In-Queue Active State */
+        .jamio-queue-btn.in-queue {
+            color: #c084fc !important;
+            filter: drop-shadow(0 0 6px rgba(168, 85, 247, 0.7)) drop-shadow(0 0 14px rgba(192, 132, 252, 0.4)) !important;
+        }
+
+        .jamio-queue-btn.in-queue .plus-badge {
+            opacity: 0 !important;
+            transform: scale(0) rotate(90deg) !important;
+        }
+
+        .jamio-queue-btn.in-queue .check-badge {
+            opacity: 1 !important;
+            transform: scale(1) rotate(0deg) !important;
+        }
+
+        .jamio-queue-btn.in-queue .check-mark {
+            stroke: #c084fc !important;
+        }
+
         /* Full Player Size */
         #fullAddQueueBtn.jamio-queue-btn {
             width: 38px;
@@ -5001,10 +5021,25 @@
         `;
     }
 
+    // Global State Sync Helpers
+    function isSongLiked(songId) {
+        if (!songId) return false;
+        const strId = String(songId);
+        return likedSongs.some(id => String(id) === strId);
+    }
+
+    function isSongInQueue(songId) {
+        if (!songId || !currentPlaylist || currentPlaylist.length === 0) return false;
+        const strId = String(songId);
+        const upcoming = currentPlaylist.slice(currentIndex + 1);
+        return upcoming.some(s => s && String(s.id) === strId);
+    }
+
     // Render Song Item Row Component
     function createSongRow(song, idx, list, contextPlaylistId = null) {
-        const isDownloaded = downloadedSongs.some(s => s.id === song.id);
-        const isLiked = likedSongs.includes(song.id);
+        const isDownloaded = downloadedSongs.some(s => String(s.id) === String(song.id));
+        const isLiked = isSongLiked(song.id);
+        const isQueued = isSongInQueue(song.id);
         const isCur = currentIndex >= 0 && currentPlaylist[currentIndex]?.id === song.id;
 
         const div = document.createElement('div');
@@ -5021,7 +5056,7 @@
         let actionButtons = '';
         if (contextPlaylistId && contextPlaylistId !== 'liked') {
             actionButtons = `
-                <button class="btn-action jamio-queue-btn" onclick="addToQueue(event, '${song.id}', this)" title="Add to Queue" aria-label="Add to Queue">
+                <button class="btn-action jamio-queue-btn ${isQueued ? 'in-queue' : ''}" data-song-id="${song.id}" onclick="toggleQueue(event, '${song.id}', this)" title="${isQueued ? 'In Queue • Tap to remove' : 'Add to Queue'}" aria-label="${isQueued ? 'In Queue • Tap to remove' : 'Add to Queue'}">
                     ${getJamioQueueButtonInner()}
                 </button>
                 <button class="btn-action" onclick="removeSongFromPlaylist('${contextPlaylistId}', '${song.id}')" title="Remove from this Playlist" style="color: #ef4444; font-size: 15px;">
@@ -5036,7 +5071,7 @@
             `;
         } else {
             actionButtons = `
-                <button class="btn-action jamio-queue-btn" onclick="addToQueue(event, '${song.id}', this)" title="Add to Queue" aria-label="Add to Queue">
+                <button class="btn-action jamio-queue-btn ${isQueued ? 'in-queue' : ''}" data-song-id="${song.id}" onclick="toggleQueue(event, '${song.id}', this)" title="${isQueued ? 'In Queue • Tap to remove' : 'Add to Queue'}" aria-label="${isQueued ? 'In Queue • Tap to remove' : 'Add to Queue'}">
                     ${getJamioQueueButtonInner()}
                 </button>
                 <button class="btn-action" onclick="openAddToPlaylistSheet('${song.id}')" title="Add to Playlist" style="font-size: 15px; color: #c084fc;">
@@ -5106,6 +5141,8 @@
         list.forEach((s, idx) => {
             container.appendChild(createSongRow(s, idx, list, contextPlaylistId));
         });
+        syncAllLikeButtons();
+        syncAllQueueButtons();
     }
 
     let isVibeRadioActive = false;
@@ -6085,6 +6122,105 @@
         }
 
         showQueueToast(song);
+        syncQueueButtonsState(song.id, true, btn);
+    }
+
+    function syncQueueButtonsState(songId, isInQueue, clickedBtn = null) {
+        const strId = String(songId);
+        const buttons = new Set();
+        if (clickedBtn && clickedBtn instanceof HTMLElement) {
+            buttons.add(clickedBtn);
+        }
+        document.querySelectorAll(`.jamio-queue-btn[data-song-id="${strId}"]`).forEach(b => buttons.add(b));
+
+        const curSong = currentPlaylist[currentIndex];
+        if (curSong && String(curSong.id) === strId) {
+            const fQBtn = document.getElementById('fullAddQueueBtn');
+            if (fQBtn) buttons.add(fQBtn);
+        }
+
+        buttons.forEach(btn => {
+            btn.classList.toggle('in-queue', isInQueue);
+            btn.setAttribute('title', isInQueue ? 'In Queue • Tap to remove' : 'Add to Queue');
+            btn.setAttribute('aria-label', isInQueue ? 'In Queue • Tap to remove' : 'Add to Queue');
+        });
+    }
+
+    function syncAllQueueButtons() {
+        document.querySelectorAll('.jamio-queue-btn[data-song-id]').forEach(btn => {
+            const sid = btn.dataset.songId;
+            if (sid) {
+                const queued = isSongInQueue(sid);
+                btn.classList.toggle('in-queue', queued);
+                btn.setAttribute('title', queued ? 'In Queue • Tap to remove' : 'Add to Queue');
+                btn.setAttribute('aria-label', queued ? 'In Queue • Tap to remove' : 'Add to Queue');
+            }
+        });
+        const curSong = currentPlaylist[currentIndex];
+        const fQBtn = document.getElementById('fullAddQueueBtn');
+        if (fQBtn && curSong) {
+            const q = isSongInQueue(curSong.id);
+            fQBtn.classList.toggle('in-queue', q);
+        }
+    }
+
+    function syncAllLikeButtons() {
+        document.querySelectorAll('.jamio-like-btn[data-song-id]').forEach(btn => {
+            const sid = btn.dataset.songId;
+            if (sid) {
+                const liked = isSongLiked(sid);
+                btn.classList.toggle('liked', liked);
+                btn.setAttribute('title', liked ? 'Unlike' : 'Favorite Song');
+                btn.setAttribute('aria-label', liked ? 'Unlike' : 'Favorite Song');
+            }
+        });
+        if (currentPlaylist && currentIndex >= 0 && currentPlaylist[currentIndex]) {
+            updateLikeButtonIcon(isSongLiked(currentPlaylist[currentIndex].id));
+        }
+    }
+
+    function toggleQueue(event, songIdOrObj, clickedBtn = null) {
+        if (event) {
+            try { event.stopPropagation(); } catch(_){}
+        }
+
+        let song = null;
+        if (typeof songIdOrObj === 'object' && songIdOrObj !== null) {
+            song = songIdOrObj;
+        } else {
+            const strId = String(songIdOrObj);
+            song = findSongAcrossPlaylists(strId)
+                || (currentPlaylist && currentPlaylist.find(s => String(s.id) === strId))
+                || (downloadedSongs && downloadedSongs.find(s => String(s.id) === strId))
+                || (window.currentSearchResults && window.currentSearchResults.find(s => String(s.id) === strId))
+                || (window.recentPlayedSearches && window.recentPlayedSearches.find(s => String(s.id) === strId));
+        }
+
+        if (!song || !song.title) {
+            showToast("Could not find song to add");
+            return;
+        }
+
+        const strId = String(song.id);
+        const inQueue = isSongInQueue(strId);
+
+        if (inQueue) {
+            // Remove from upcoming queue
+            const removeIdx = currentPlaylist.findIndex((s, i) => i > currentIndex && String(s.id) === strId);
+            if (removeIdx > currentIndex) {
+                currentPlaylist.splice(removeIdx, 1);
+            }
+            updateQueueCountBadge();
+            const drawer = document.getElementById('erasTracklistDrawer');
+            if (drawer && drawer.style.display !== 'none') {
+                renderErasTracklistDrawer();
+            }
+            showToast(`Removed "${song.title}" from Queue`);
+            syncQueueButtonsState(strId, false, clickedBtn);
+        } else {
+            addToQueue(event, song, clickedBtn);
+            syncQueueButtonsState(strId, true, clickedBtn);
+        }
     }
 
     function moveQueueSong(fromIdx, toIdx, event) {
@@ -6102,6 +6238,7 @@
         }
 
         renderErasTracklistDrawer();
+        syncAllQueueButtons();
     }
 
     function removeSongFromQueue(idx, event) {
@@ -6118,7 +6255,9 @@
             const newCurIdx = currentPlaylist.findIndex(s => s === playingSong || s.id === playingSong.id);
             if (newCurIdx >= 0) currentIndex = newCurIdx;
         }
+        updateQueueCountBadge();
         renderErasTracklistDrawer();
+        syncAllQueueButtons();
         showToast("Removed from Queue");
     }
 
@@ -6130,7 +6269,9 @@
         const curSong = currentPlaylist[currentIndex] || currentPlaylist[0];
         currentPlaylist = [curSong];
         currentIndex = 0;
+        updateQueueCountBadge();
         renderErasTracklistDrawer();
+        syncAllQueueButtons();
         showToast("Queue cleared");
     }
 
@@ -6784,6 +6925,7 @@
 
         // Trigger Apple-Grade Jamio Spring & Particle Animation
         animateJamioLikeButtons(strId, willBeLiked, clickedBtn);
+        syncAllLikeButtons();
 
         renderPlaylistsTab();
         syncStorageToNative();
