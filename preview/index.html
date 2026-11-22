@@ -3376,12 +3376,174 @@
         };
     }
 
+    async function safeFetchText(url, customHeaders = {}) {
+        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) {
+            try {
+                const res = await window.Capacitor.Plugins.CapacitorHttp.get({
+                    url: url,
+                    headers: customHeaders
+                });
+                if (res && res.data) {
+                    return typeof res.data === 'string' ? res.data : JSON.stringify(res.data);
+                }
+            } catch (err) {
+                console.log("CapacitorHttp text fetch fallback:", err);
+            }
+        }
+        const resp = await fetch(url, { headers: customHeaders });
+        if (!resp.ok) return null;
+        return await resp.text();
+    }
+
+    async function clientSpotifyImport(spotifyUrl) {
+        if (!spotifyUrl || typeof spotifyUrl !== 'string') {
+            return { success: false, error: 'Please enter a valid Spotify URL.' };
+        }
+
+        const match = spotifyUrl.match(/(playlist|album|track)[/:]([a-zA-Z0-9]+)/);
+        if (!match) {
+            return { success: false, error: 'Invalid Spotify URL. Expected open.spotify.com/playlist/... or album/track.' };
+        }
+
+        const type = match[1];
+        const id = match[2];
+        const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
+
+        let html = null;
+        try {
+            html = await safeFetchText(embedUrl, {
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+            });
+        } catch (e) {
+            console.error("Failed to fetch Spotify embed:", e);
+        }
+
+        if (!html) {
+            return { success: false, error: 'Failed to connect to Spotify. Please check your internet connection.' };
+        }
+
+        let playlistName = type === 'album' ? 'Spotify Album' : (type === 'track' ? 'Spotify Track' : 'Spotify Playlist');
+        const rawTracks = [];
+
+        // Extract __NEXT_DATA__
+        const dataMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/);
+        if (dataMatch && dataMatch[1]) {
+            try {
+                const d = JSON.parse(dataMatch[1]);
+                const entity = d?.props?.pageProps?.state?.data?.entity || {};
+                playlistName = entity.name || entity.title || playlistName;
+
+                if (type === 'track') {
+                    const artists = (entity.artists && Array.isArray(entity.artists)) 
+                        ? entity.artists.map(a => a.name).join(', ') 
+                        : (entity.subtitle || 'Artist');
+                    rawTracks.push({
+                        title: entity.title || entity.name || 'Unknown Track',
+                        artist: artists,
+                        album: playlistName,
+                        duration: entity.duration ? Math.round(entity.duration / 1000) : 210
+                    });
+                } else if (Array.isArray(entity.trackList) && entity.trackList.length > 0) {
+                    entity.trackList.forEach(item => {
+                        if (!item) return;
+                        const artists = item.subtitle || (Array.isArray(item.artists) ? item.artists.map(a => a.name).join(', ') : 'Artist');
+                        rawTracks.push({
+                            title: item.title || item.name || '',
+                            artist: artists,
+                            album: playlistName,
+                            duration: item.duration ? Math.round(item.duration / 1000) : 210
+                        });
+                    });
+                }
+            } catch (err) {
+                console.error("Error parsing Spotify NEXT_DATA:", err);
+            }
+        }
+
+        // Fallback: search regex in HTML for track titles if NEXT_DATA had an alternate structure
+        if (rawTracks.length === 0) {
+            const titleMatches = html.match(/"title"\s*:\s*"([^"]+)"/g);
+            const subMatches = html.match(/"subtitle"\s*:\s*"([^"]+)"/g);
+            if (titleMatches && titleMatches.length > 0) {
+                titleMatches.forEach((tm, i) => {
+                    const tName = tm.replace(/"title"\s*:\s*"/, '').replace(/"$/, '').trim();
+                    let aName = 'Artist';
+                    if (subMatches && subMatches[i]) {
+                        aName = subMatches[i].replace(/"subtitle"\s*:\s*"/, '').replace(/"$/, '').trim();
+                    }
+                    if (tName && !rawTracks.some(r => r.title === tName)) {
+                        rawTracks.push({
+                            title: tName,
+                            artist: aName,
+                            album: playlistName,
+                            duration: 210
+                        });
+                    }
+                });
+            }
+        }
+
+        if (rawTracks.length === 0) {
+            return { success: false, error: 'Could not extract tracks from this Spotify link. Please ensure the playlist is public.' };
+        }
+
+        const matchedSongs = [];
+        const chunkSize = 5;
+
+        for (let i = 0; i < rawTracks.length; i += chunkSize) {
+            const chunk = rawTracks.slice(i, i + chunkSize);
+            const chunkResults = await Promise.all(chunk.map(async (item, chunkIdx) => {
+                const overallIdx = i + chunkIdx;
+                const cleanTitle = (item.title || '')
+                    .replace(/\s*[\(\[].*?[\)\]]/g, '')
+                    .replace(/["']/g, '')
+                    .replace(/\b(feat\.?|ft\.?|featuring)\b.*/i, '')
+                    .trim();
+                const firstArtist = (item.artist || '').split(/[,&/]/)[0].trim();
+                const query = `${cleanTitle} ${firstArtist}`.trim();
+
+                let hits = await clientSaavnSearch(query, 1);
+                if (!hits || hits.length === 0) {
+                    hits = await clientSaavnSearch(cleanTitle, 1);
+                }
+
+                if (hits && hits.length > 0) {
+                    return hits[0];
+                }
+                return {
+                    id: `sp_${overallIdx}_${Date.now()}`,
+                    title: item.title,
+                    artist: item.artist || 'Artist',
+                    album: playlistName,
+                    duration: item.duration || 210,
+                    audioUrl: '',
+                    coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=500',
+                    quality: '320 KBPS MASTER'
+                };
+            }));
+
+            matchedSongs.push(...chunkResults);
+        }
+
+        const validMatches = matchedSongs.filter(s => s && s.audioUrl);
+        const finalTracks = validMatches.length > 0 ? validMatches : matchedSongs;
+
+        return {
+            success: true,
+            playlistName: playlistName,
+            totalSpotifyTracks: rawTracks.length,
+            matchedCount: finalTracks.length,
+            tracks: finalTracks
+        };
+    }
+
     const clientSaavnEngine = {
         decryptUrl: decryptSaavnUrl,
         search: clientSaavnSearch,
         lyrics: clientSaavnLyrics,
         recommendations: clientSaavnRecommendations,
         vibeFeed: clientSaavnVibeFeed,
+        spotifyImport: clientSpotifyImport,
         async handle(endpoint, params = {}) {
             if (endpoint === 'search') {
                 const results = await this.search(params.q || '', params.limit || 20);
@@ -3393,7 +3555,7 @@
             } else if (endpoint === 'lyrics') {
                 return await this.lyrics(params.track || params.title || '', params.artist || '');
             } else if (endpoint === 'import-spotify') {
-                return { success: false, error: 'Spotify import is available via Desktop server.' };
+                return await this.spotifyImport(params.url || '');
             }
             return { success: false, error: 'Unknown endpoint' };
         }
@@ -5599,6 +5761,7 @@
                 };
                 userPlaylists.push(importedPl);
                 localStorage.setItem('jamio_user_playlists', JSON.stringify(userPlaylists));
+                renderPlaylistsTab();
 
                 currentPlaylist = data.tracks;
                 renderSongList('homeSongsList', data.tracks);
