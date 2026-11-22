@@ -21,8 +21,14 @@ jobs:
         run: |
           npm init -y
           npm install @capacitor/core@5.7.4 @capacitor/cli@5.7.4 @capacitor/ios@5.7.4
-          npx cap init "Jamio" "com.jamio.music" --web-dir "preview"
-          npx cap add ios
+          if [ ! -f capacitor.config.json ]; then
+            npx cap init "Jamio" "com.jamio.music" --web-dir "preview"
+          fi
+          npx cap add ios || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity dict" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSAppTransportSecurity:NSAllowsArbitraryLoads true" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
           cd ios/App
           pod install
           cd ../..
