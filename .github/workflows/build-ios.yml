@@ -29,6 +29,8 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :NSAppTransportSecurity:NSAllowsArbitraryLoads bool true" ios/App/App/Info.plist || /usr/libexec/PlistBuddy -c "Set :NSAppTransportSecurity:NSAllowsArbitraryLoads true" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes array" ios/App/App/Info.plist || true
           /usr/libexec/PlistBuddy -c "Add :UIBackgroundModes:0 string audio" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UIViewControllerBasedStatusBarAppearance bool false" ios/App/App/Info.plist || true
+          /usr/libexec/PlistBuddy -c "Add :UIStatusBarStyle string UIStatusBarStyleLightContent" ios/App/App/Info.plist || true
           cd ios/App
           pod install
           cd ../..
