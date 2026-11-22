@@ -1434,7 +1434,7 @@
         }
 
         .eras-drawer-list {
-            max-height: 200px;
+            max-height: min(340px, 45vh);
             overflow-y: auto;
             scrollbar-width: thin;
         }
@@ -1446,7 +1446,9 @@
             padding: 8px 10px;
             border-radius: 10px;
             cursor: pointer;
-            transition: background 0.18s;
+            transition: background 0.18s, transform 0.15s, border-color 0.15s;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .eras-drawer-item:hover {
@@ -1456,6 +1458,85 @@
         .eras-drawer-item.active {
             background: rgba(168, 85, 247, 0.18);
             border: 1px solid rgba(168, 85, 247, 0.35);
+        }
+
+        .eras-drawer-item.dragging {
+            opacity: 0.35;
+            background: rgba(168, 85, 247, 0.12);
+            border: 1px dashed #a855f7;
+        }
+
+        .eras-drawer-item.drag-over {
+            border-top: 2px solid #38bdf8;
+            background: rgba(56, 189, 248, 0.12);
+        }
+
+        .eras-drag-handle {
+            color: var(--text-muted);
+            cursor: grab;
+            padding: 4px 3px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            touch-action: none;
+        }
+
+        .eras-drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .eras-drawer-actions {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-left: 6px;
+            flex-shrink: 0;
+        }
+
+        .eras-reorder-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.15s ease;
+        }
+
+        .eras-reorder-btn:hover:not(:disabled) {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: #a855f7;
+            color: #ffffff;
+        }
+
+        .eras-reorder-btn:disabled {
+            opacity: 0.22;
+            cursor: default;
+        }
+
+        .eras-remove-queue-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.15s ease;
+        }
+
+        .eras-remove-queue-btn:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.18);
         }
 
         .eras-drawer-index {
@@ -2797,12 +2878,15 @@
                     <button class="btn-action" id="fullLikeBtn" title="Favorite Song" style="font-size: 19px; margin-right: 6px;">
                         <i class="fa-regular fa-heart"></i>
                     </button>
+                    <button class="btn-action" id="fullAddQueueBtn" onclick="addToQueue(event, currentPlaylist[currentIndex])" title="Add to Queue" style="font-size: 16px; margin-right: 6px; color: #38bdf8;">
+                        <i class="fa-solid fa-list-check"></i>
+                    </button>
                     <button class="btn-action" id="fullAddPlaylistBtn" title="Add to Playlist" style="font-size: 17px; margin-right: 8px;">
                         <i class="fa-solid fa-circle-plus"></i>
                     </button>
                     <button class="eras-tracklist-btn" id="btnToggleTracklist" onclick="toggleTracklistDrawer()">
                         <i class="fa-solid fa-bars-staggered"></i>
-                        <span>TRACKLIST</span>
+                        <span>QUEUE</span>
                     </button>
                 </div>
             </div>
@@ -2811,15 +2895,18 @@
             <div class="eras-tracklist-drawer" id="erasTracklistDrawer" style="display: none;">
                 <div class="eras-drawer-header">
                     <div class="eras-drawer-title">
-                        <i class="fa-solid fa-compact-disc" style="color: #c084fc;"></i>
-                        <span>UP NEXT & QUEUE</span>
+                        <i class="fa-solid fa-bars-staggered" style="color: #c084fc;"></i>
+                        <span id="queueDrawerHeaderTitle">UP NEXT & QUEUE</span>
                     </div>
-                    <button class="eras-drawer-close" onclick="toggleTracklistDrawer(false)">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button onclick="clearUpcomingQueue()" class="mode-badge" style="height: 26px; padding: 0 10px; font-size: 11px; background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.4); color: #f87171; border-radius: 13px;">Clear</button>
+                        <button class="eras-drawer-close" onclick="toggleTracklistDrawer(false)">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="eras-drawer-list" id="erasDrawerTracklist">
-                    <!-- Populated dynamically with track numbers, durations, eq animation -->
+                    <!-- Populated dynamically with track numbers, durations, eq animation, and reorder controls -->
                 </div>
             </div>
 
@@ -3889,6 +3976,9 @@
         let actionButtons = '';
         if (contextPlaylistId && contextPlaylistId !== 'liked') {
             actionButtons = `
+                <button class="btn-action" onclick="addToQueue(event, '${song.id}')" title="Add to Queue" style="font-size: 14px; color: #38bdf8;">
+                    <i class="fa-solid fa-list-check"></i>
+                </button>
                 <button class="btn-action" onclick="removeSongFromPlaylist('${contextPlaylistId}', '${song.id}')" title="Remove from this Playlist" style="color: #ef4444; font-size: 15px;">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -3901,6 +3991,9 @@
             `;
         } else {
             actionButtons = `
+                <button class="btn-action" onclick="addToQueue(event, '${song.id}')" title="Add to Queue" style="font-size: 14px; color: #38bdf8;">
+                    <i class="fa-solid fa-list-check"></i>
+                </button>
                 <button class="btn-action" onclick="openAddToPlaylistSheet('${song.id}')" title="Add to Playlist" style="font-size: 15px; color: #c084fc;">
                     <i class="fa-solid fa-folder-plus"></i>
                 </button>
@@ -4768,7 +4861,104 @@
         window.addEventListener('mouseup', onTouchEnd);
     })();
 
-    // Dynamic In-Player Tracklist Drawer (Matching video)
+    // ==========================================
+    // DYNAMIC QUEUE ENGINE & REORDERING
+    // ==========================================
+    function addToQueue(event, songIdOrObj) {
+        if (event) event.stopPropagation();
+
+        let song = null;
+        if (typeof songIdOrObj === 'object' && songIdOrObj !== null) {
+            song = songIdOrObj;
+        } else {
+            const strId = String(songIdOrObj);
+            if (allKnownSongsMap.has(strId)) {
+                song = allKnownSongsMap.get(strId);
+            } else {
+                song = currentPlaylist.find(s => String(s.id) === strId)
+                    || downloadedSongs.find(s => String(s.id) === strId)
+                    || (window.currentSearchResults && window.currentSearchResults.find(s => String(s.id) === strId))
+                    || (window.recentPlayedSearches && window.recentPlayedSearches.find(s => String(s.id) === strId));
+            }
+        }
+
+        if (!song || !song.title) {
+            showToast("Could not find song to add");
+            return;
+        }
+
+        registerKnownSongs([song]);
+
+        if (!currentPlaylist || currentPlaylist.length === 0) {
+            currentPlaylist = [song];
+            playTrack(0, currentPlaylist);
+            showToast(`Now playing: ${song.title}`);
+            return;
+        }
+
+        // Spotify Up-Next: insert right after currently playing track
+        const insertPos = (currentIndex >= 0 && currentIndex < currentPlaylist.length)
+            ? currentIndex + 1
+            : currentPlaylist.length;
+
+        currentPlaylist.splice(insertPos, 0, song);
+
+        const drawer = document.getElementById('erasTracklistDrawer');
+        if (drawer && drawer.style.display !== 'none') {
+            renderErasTracklistDrawer();
+        }
+
+        showToast(`✓ Added to Queue: ${song.title}`);
+    }
+
+    function moveQueueSong(fromIdx, toIdx, event) {
+        if (event) event.stopPropagation();
+        if (fromIdx < 0 || toIdx < 0 || fromIdx >= currentPlaylist.length || toIdx >= currentPlaylist.length || fromIdx === toIdx) return;
+
+        const playingSong = currentPlaylist[currentIndex];
+        const [moved] = currentPlaylist.splice(fromIdx, 1);
+        currentPlaylist.splice(toIdx, 0, moved);
+
+        // Keep currentIndex synchronized to currently playing song
+        if (playingSong) {
+            const newCurIdx = currentPlaylist.findIndex(s => s === playingSong || s.id === playingSong.id);
+            if (newCurIdx >= 0) currentIndex = newCurIdx;
+        }
+
+        renderErasTracklistDrawer();
+    }
+
+    function removeSongFromQueue(idx, event) {
+        if (event) event.stopPropagation();
+        if (idx < 0 || idx >= currentPlaylist.length) return;
+        if (idx === currentIndex) {
+            showToast("Cannot remove currently playing track");
+            return;
+        }
+
+        const playingSong = currentPlaylist[currentIndex];
+        currentPlaylist.splice(idx, 1);
+        if (playingSong) {
+            const newCurIdx = currentPlaylist.findIndex(s => s === playingSong || s.id === playingSong.id);
+            if (newCurIdx >= 0) currentIndex = newCurIdx;
+        }
+        renderErasTracklistDrawer();
+        showToast("Removed from Queue");
+    }
+
+    function clearUpcomingQueue() {
+        if (!currentPlaylist || currentPlaylist.length <= 1) {
+            showToast("Queue is already empty");
+            return;
+        }
+        const curSong = currentPlaylist[currentIndex] || currentPlaylist[0];
+        currentPlaylist = [curSong];
+        currentIndex = 0;
+        renderErasTracklistDrawer();
+        showToast("Queue cleared");
+    }
+
+    // Dynamic In-Player Tracklist / Queue Drawer
     function toggleTracklistDrawer(forceState) {
         const drawer = document.getElementById('erasTracklistDrawer');
         if (!drawer) return;
@@ -4787,6 +4977,11 @@
         if (!listContainer) return;
         listContainer.innerHTML = '';
 
+        const headerTitle = document.getElementById('queueDrawerHeaderTitle');
+        if (headerTitle) {
+            headerTitle.innerText = `UP NEXT & QUEUE (${currentPlaylist.length})`;
+        }
+
         if (!currentPlaylist || currentPlaylist.length === 0) {
             listContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12px; text-align:center; padding:16px;">Queue is empty</div>';
             return;
@@ -4796,14 +4991,26 @@
             const isPlayingThis = idx === currentIndex;
             const item = document.createElement('div');
             item.className = 'eras-drawer-item' + (isPlayingThis ? ' active' : '');
-            item.onclick = () => {
-                playTrack(idx, currentPlaylist, false, !isVibeRadioActive);
-            };
+            item.setAttribute('data-index', idx);
+            item.draggable = true;
 
-            const durationFormatted = trk.duration ? trk.duration : '03:30';
+            const durationFormatted = trk.duration ? formatTime(trk.duration) : '03:30';
+            const fallbackCover = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600';
+            const coverSrc = trk.coverUrl || fallbackCover;
+
+            const isFirst = idx === 0;
+            const isLast = idx === currentPlaylist.length - 1;
 
             item.innerHTML = `
-                <div class="eras-drawer-index">${isPlayingThis ? '<i class="fa-solid fa-volume-high" style="color:#c084fc; font-size:11px;"></i>' : (idx + 1)}</div>
+                <div class="eras-drag-handle" title="Hold & drag to reorder">
+                    <i class="fa-solid fa-grip-vertical"></i>
+                </div>
+                <div class="eras-drawer-index">
+                    ${isPlayingThis ? '<i class="fa-solid fa-volume-high" style="color:#c084fc; font-size:11px;"></i>' : (idx + 1)}
+                </div>
+                <div style="width: 32px; height: 32px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #1a162b;">
+                    <img src="${coverSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${fallbackCover}'">
+                </div>
                 <div class="eras-drawer-meta">
                     <div class="eras-drawer-track">${trk.title}</div>
                     <div class="eras-drawer-artist">${trk.artist}</div>
@@ -4814,8 +5021,93 @@
                         <div class="eras-eq-bar"></div>
                         <div class="eras-eq-bar"></div>
                     </div>
-                ` : `<span style="font-size:11px; color:var(--text-muted); font-weight:600;">${durationFormatted}</span>`}
+                ` : `<span style="font-size:11px; color:var(--text-muted); font-weight:600; flex-shrink:0;">${durationFormatted}</span>`}
+                <div class="eras-drawer-actions" onclick="event.stopPropagation()">
+                    <button class="eras-reorder-btn" title="Move Up" onclick="moveQueueSong(${idx}, ${idx - 1}, event)" ${isFirst ? 'disabled style="opacity:0.2; cursor:default;"' : ''}>
+                        <i class="fa-solid fa-chevron-up"></i>
+                    </button>
+                    <button class="eras-reorder-btn" title="Move Down" onclick="moveQueueSong(${idx}, ${idx + 1}, event)" ${isLast ? 'disabled style="opacity:0.2; cursor:default;"' : ''}>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <button class="eras-remove-queue-btn" title="Remove from Queue" onclick="removeSongFromQueue(${idx}, event)">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             `;
+
+            // Tapping row plays that song
+            item.onclick = (e) => {
+                if (e.target.closest('.eras-drawer-actions') || e.target.closest('.eras-drag-handle')) return;
+                playTrack(idx, currentPlaylist, false, !isVibeRadioActive);
+            };
+
+            // HTML5 Drag & Drop (Desktop)
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(idx));
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                listContainer.querySelectorAll('.eras-drawer-item').forEach(el => el.classList.remove('drag-over'));
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                item.classList.add('drag-over');
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drag-over');
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                item.classList.remove('drag-over');
+                const fromIdx = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                const toIdx = idx;
+                if (!isNaN(fromIdx) && fromIdx !== toIdx) {
+                    moveQueueSong(fromIdx, toIdx);
+                }
+            });
+
+            // Touch Drag-to-Reorder (Mobile iOS & Android WebViews)
+            const handle = item.querySelector('.eras-drag-handle');
+            if (handle) {
+                let fromTouchIdx = idx;
+
+                handle.addEventListener('touchstart', (e) => {
+                    fromTouchIdx = idx;
+                    item.classList.add('dragging');
+                }, { passive: true });
+
+                handle.addEventListener('touchmove', (e) => {
+                    const currentY = e.touches[0].clientY;
+                    const items = Array.from(listContainer.querySelectorAll('.eras-drawer-item'));
+                    items.forEach(it => it.classList.remove('drag-over'));
+                    const targetEl = document.elementFromPoint(e.touches[0].clientX, currentY)?.closest('.eras-drawer-item');
+                    if (targetEl && targetEl !== item) {
+                        targetEl.classList.add('drag-over');
+                    }
+                }, { passive: true });
+
+                handle.addEventListener('touchend', (e) => {
+                    item.classList.remove('dragging');
+                    const items = Array.from(listContainer.querySelectorAll('.eras-drawer-item'));
+                    items.forEach(it => it.classList.remove('drag-over'));
+                    const endY = e.changedTouches[0].clientY;
+                    const targetEl = document.elementFromPoint(e.changedTouches[0].clientX, endY)?.closest('.eras-drawer-item');
+                    if (targetEl && targetEl !== item) {
+                        const toTouchIdx = parseInt(targetEl.getAttribute('data-index'), 10);
+                        if (!isNaN(toTouchIdx) && fromTouchIdx !== toTouchIdx) {
+                            moveQueueSong(fromTouchIdx, toTouchIdx);
+                        }
+                    }
+                }, { passive: true });
+            }
+
             listContainer.appendChild(item);
         });
     }
@@ -6054,7 +6346,43 @@
     };
 
     function showToast(msg) {
-        // Disabled completely: no intrusive popups
+        let t = document.getElementById('jamioToastCapsule');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'jamioToastCapsule';
+            t.style.cssText = `
+                position: fixed;
+                bottom: calc(var(--safe-bottom) + 84px);
+                left: 50%;
+                transform: translateX(-50%) translateY(20px);
+                background: rgba(18, 14, 28, 0.96);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                color: #ffffff;
+                border: 1px solid rgba(168, 85, 247, 0.35);
+                box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+                border-radius: 24px;
+                padding: 10px 18px;
+                font-size: 13px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                z-index: 99999;
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+            `;
+            document.body.appendChild(t);
+        }
+        t.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #a855f7; font-size: 14px;"></i> <span>${msg}</span>`;
+        t.style.opacity = '1';
+        t.style.transform = 'translateX(-50%) translateY(0)';
+        clearTimeout(t._hideTimeout);
+        t._hideTimeout = setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transform = 'translateX(-50%) translateY(15px)';
+        }, 1900);
     }
 
     // Buttery Smooth Wheel Momentum Scrolling for desktop/trackpad
