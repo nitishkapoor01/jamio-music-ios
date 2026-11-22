@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    <script src="capacitor.js"></script>
     <style>
         :root {
             --android-safe-top: 0px;
@@ -3201,6 +3202,7 @@
     let isAutoplay = true;
     let repeatMode = 'off'; // 'off' | 'all' | 'one'
     let isShuffle = false;
+    let lastBridgePositionUpdate = 0;
 
     // Expose core audio state and navigation to window for external/bridge access
     window.currentPlaylist = currentPlaylist;
@@ -3233,9 +3235,12 @@
     }
 
     async function safeFetchJson(url, customHeaders = {}) {
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) {
+        // 1. Try Capacitor native HTTP bridge (bypasses CORS completely on iOS & Android WKWebView)
+        const cap = window.Capacitor;
+        const capHttp = (cap && cap.Plugins && cap.Plugins.CapacitorHttp) ? cap.Plugins.CapacitorHttp : window.CapacitorHttp;
+        if (capHttp && typeof capHttp.get === 'function') {
             try {
-                const res = await window.Capacitor.Plugins.CapacitorHttp.get({
+                const res = await capHttp.get({
                     url: url,
                     headers: customHeaders
                 });
@@ -3246,9 +3251,31 @@
                 console.log("CapacitorHttp direct call fallback:", err);
             }
         }
-        const resp = await fetch(url, { headers: customHeaders });
-        if (!resp.ok) return null;
-        return await resp.json();
+
+        // 2. Standard fetch with forbidden browser headers safely stripped (User-Agent forbidden in standard browser fetch)
+        const fetchHeaders = { ...customHeaders };
+        delete fetchHeaders['User-Agent'];
+        delete fetchHeaders['user-agent'];
+
+        try {
+            const resp = await fetch(url, { headers: fetchHeaders });
+            if (resp && resp.ok) {
+                return await resp.json();
+            }
+        } catch (fetchErr) {
+            console.warn("Direct fetch error:", fetchErr);
+            // 3. Fallback via public HTTPS CORS mirror if direct fetch is blocked by CORS in Safari/browser
+            try {
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const pResp = await fetch(proxyUrl);
+                if (pResp && pResp.ok) {
+                    return await pResp.json();
+                }
+            } catch (pErr) {
+                console.warn("CORS proxy fetch error:", pErr);
+            }
+        }
+        return null;
     }
 
     async function clientSaavnSearch(query, limit = 20) {
@@ -3785,9 +3812,11 @@
     }
 
     async function safeFetchText(url, customHeaders = {}) {
-        if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorHttp) {
+        const cap = window.Capacitor;
+        const capHttp = (cap && cap.Plugins && cap.Plugins.CapacitorHttp) ? cap.Plugins.CapacitorHttp : window.CapacitorHttp;
+        if (capHttp && typeof capHttp.get === 'function') {
             try {
-                const res = await window.Capacitor.Plugins.CapacitorHttp.get({
+                const res = await capHttp.get({
                     url: url,
                     headers: customHeaders
                 });
@@ -3798,9 +3827,20 @@
                 console.log("CapacitorHttp text fetch fallback:", err);
             }
         }
-        const resp = await fetch(url, { headers: customHeaders });
-        if (!resp.ok) return null;
-        return await resp.text();
+        const fetchHeaders = { ...customHeaders };
+        delete fetchHeaders['User-Agent'];
+        delete fetchHeaders['user-agent'];
+        try {
+            const resp = await fetch(url, { headers: fetchHeaders });
+            if (resp && resp.ok) return await resp.text();
+        } catch (e) {
+            try {
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+                const pResp = await fetch(proxyUrl);
+                if (pResp && pResp.ok) return await pResp.text();
+            } catch (pe) {}
+        }
+        return null;
     }
 
     async function clientSpotifyImport(spotifyUrl) {
@@ -4203,8 +4243,12 @@
                 if (homeSecTag) homeSecTag.innerText = '320 KBPS MASTER';
 
                 if (reloadSongList && data.results && data.results.length > 0) {
-                    currentPlaylist = data.results;
-                    renderSongList('homeSongsList', currentPlaylist);
+                    window.homeFeedSongs = data.results;
+                    renderSongList('homeSongsList', data.results, 'home_feed');
+                    if (!currentPlaylist || currentPlaylist.length === 0) {
+                        currentPlaylist = data.results;
+                        window.currentPlaylist = currentPlaylist;
+                    }
                     if (window.hideFastScrubber) window.hideFastScrubber();
                 }
 
@@ -4428,6 +4472,9 @@
         isVibeRadioActive = true;
         vibeRadioSeed = track;
         fetchAndQueueVibeRadio(track);
+
+        // Persist last played track and playlist state across sessions
+        saveLastPlaybackState(track, 0, currentPlaylist, currentIndex);
 
         if (autoExpand) {
             fullPlayer.classList.add('expanded');
@@ -4667,7 +4714,7 @@
 
         try {
             if (window.AndroidBridge && typeof window.AndroidBridge.onPlaybackStateChange === 'function') {
-                window.AndroidBridge.onPlaybackStateChange(playing);
+                window.AndroidBridge.onPlaybackStateChange(playing, audio.currentTime || 0, audio.duration || 180);
             }
         } catch (_) {}
 
@@ -5678,6 +5725,18 @@
             document.getElementById('currentTime').innerText = formatTime(audio.currentTime);
             document.getElementById('totalTime').innerText = formatTime(audio.duration);
             updateMediaSessionPositionState(false);
+
+            // Throttled notification bridge update for Android notification progress bar & squiggly waveform
+            const now = Date.now();
+            if (now - lastBridgePositionUpdate > 1200) {
+                lastBridgePositionUpdate = now;
+                try {
+                    if (window.AndroidBridge && typeof window.AndroidBridge.onPositionUpdate === 'function') {
+                        window.AndroidBridge.onPositionUpdate(audio.currentTime, audio.duration || 180);
+                    }
+                } catch (_) {}
+                updateLastPlaybackTime(audio.currentTime);
+            }
 
             // Time-Synced Lyrics Auto-highlighting & Scrolling (Fast cached DOM lookup with requestAnimationFrame)
             if (currentLyrics.length > 0) {
@@ -7183,33 +7242,162 @@
         return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
     }
 
-    // Initial load: render Home songs & pre-load first song without auto-expanding full player
-    renderSongList('homeSongsList', initialTracks);
-    if (initialTracks.length > 0) {
-        const first = initialTracks[0];
-        currentIndex = 0;
-        audio.src = first.audioUrl;
-        
-        const erasTitle = document.getElementById('erasSongTitle');
-        if (erasTitle) erasTitle.innerText = first.title;
-        const erasArtist = document.getElementById('erasSongArtist');
-        if (erasArtist) erasArtist.innerText = first.artist;
-        const erasImg1 = document.getElementById('erasImg1');
-        if (erasImg1) erasImg1.src = first.coverUrl;
-        updateAmbientBackdrop(first.coverUrl);
+    // ==========================================
+    // PERSISTENT PLAYBACK STATE (LAST PLAYED TRACK & POSITION)
+    // ==========================================
+    function saveLastPlaybackState(track, currentTime = 0, playlist = currentPlaylist, index = currentIndex) {
+        if (!track) return;
+        try {
+            const cleanTrack = {
+                id: track.id,
+                title: track.title,
+                artist: track.artist,
+                album: track.album || '',
+                duration: track.duration || 180,
+                audioUrl: track.audioUrl || '',
+                coverUrl: track.coverUrl || '',
+                quality: track.quality || '320 KBPS MASTER'
+            };
+            const safePlaylist = (Array.isArray(playlist) && playlist.length > 0)
+                ? playlist.map(s => ({
+                    id: s.id,
+                    title: s.title,
+                    artist: s.artist,
+                    album: s.album || '',
+                    duration: s.duration || 180,
+                    audioUrl: s.audioUrl || '',
+                    coverUrl: s.coverUrl || '',
+                    quality: s.quality || '320 KBPS MASTER'
+                })).slice(0, 50)
+                : [cleanTrack];
 
-        const miniCover = document.getElementById('miniCover');
-        if (miniCover) miniCover.src = first.coverUrl;
-        const miniTitle = document.getElementById('miniTitle');
-        if (miniTitle) miniTitle.innerText = first.title;
-        const miniArtist = document.getElementById('miniArtist');
-        if (miniArtist) miniArtist.innerText = first.artist;
-        if (miniPlayer) miniPlayer.style.display = 'flex';
-        loadLyrics(first.title, first.artist);
+            const state = {
+                track: cleanTrack,
+                currentTime: currentTime,
+                index: index >= 0 ? index : 0,
+                playlist: safePlaylist,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('jamio_last_playback_state', JSON.stringify(state));
+        } catch (e) {
+            console.warn("Save last playback state error:", e);
+        }
     }
 
+    function updateLastPlaybackTime(time) {
+        try {
+            localStorage.setItem('jamio_last_playback_time', String(time));
+            const raw = localStorage.getItem('jamio_last_playback_state');
+            if (raw) {
+                const s = JSON.parse(raw);
+                s.currentTime = time;
+                localStorage.setItem('jamio_last_playback_state', JSON.stringify(s));
+            }
+        } catch (_) {}
+    }
+
+    function restoreLastPlaybackState() {
+        try {
+            const raw = localStorage.getItem('jamio_last_playback_state');
+            let track = null;
+            let playlist = initialTracks;
+            let idx = 0;
+            let seekPos = 0;
+
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (s && s.track && s.track.title) {
+                    track = s.track;
+                    playlist = (s.playlist && s.playlist.length > 0) ? s.playlist : [s.track];
+                    idx = (s.index >= 0 && s.index < playlist.length) ? s.index : 0;
+                    seekPos = typeof s.currentTime === 'number' ? s.currentTime : parseFloat(localStorage.getItem('jamio_last_playback_time') || '0');
+                }
+            }
+
+            if (!track && initialTracks.length > 0) {
+                track = initialTracks[0];
+                playlist = initialTracks;
+                idx = 0;
+                seekPos = 0;
+            }
+
+            if (!track) return;
+
+            currentPlaylist = playlist;
+            currentIndex = idx;
+            window.currentPlaylist = currentPlaylist;
+            window.currentIndex = currentIndex;
+
+            // Pre-load audio source and restore seek position
+            const isOffline = downloadedSongs.some(s => s.id === track.id);
+            const cleanId = (track.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const offlineUrl = 'http://127.0.0.1:8116/offline_audio/track_' + cleanId + '.mp3';
+
+            if (isOffline || isOfflineMode || !navigator.onLine) {
+                audio.src = offlineUrl;
+            } else {
+                audio.src = track.audioUrl || offlineUrl;
+            }
+
+            if (seekPos > 0 && seekPos < (track.duration || 300) - 5) {
+                audio.addEventListener('loadedmetadata', function onLoadedMeta() {
+                    audio.currentTime = seekPos;
+                    audio.removeEventListener('loadedmetadata', onLoadedMeta);
+                });
+            }
+
+            // Restore Full Player UI
+            const erasTitle = document.getElementById('erasSongTitle');
+            if (erasTitle) erasTitle.innerText = track.title;
+            const erasArtist = document.getElementById('erasSongArtist');
+            if (erasArtist) erasArtist.innerText = track.artist;
+            const erasImg1 = document.getElementById('erasImg1');
+            if (erasImg1) erasImg1.src = track.coverUrl;
+            updateAmbientBackdrop(track.coverUrl);
+
+            // Restore Mini Player UI
+            const miniCover = document.getElementById('miniCover');
+            if (miniCover) miniCover.src = track.coverUrl;
+            const miniTitle = document.getElementById('miniTitle');
+            if (miniTitle) miniTitle.innerText = track.title;
+            const miniArtist = document.getElementById('miniArtist');
+            if (miniArtist) miniArtist.innerText = track.artist;
+            if (miniPlayer) miniPlayer.style.display = 'flex';
+
+            // Restore seekbar & duration display
+            const dur = track.duration || 180;
+            const pct = dur > 0 ? (seekPos / dur) * 100 : 0;
+            const miniBar = document.getElementById('miniProgressBar');
+            if (miniBar) miniBar.style.width = pct + '%';
+            const scrubBar = document.getElementById('scrubberProgress');
+            if (scrubBar) scrubBar.style.width = pct + '%';
+            const curTimeEl = document.getElementById('currentTime');
+            if (curTimeEl) curTimeEl.innerText = formatTime(seekPos);
+            const totTimeEl = document.getElementById('totalTime');
+            if (totTimeEl) totTimeEl.innerText = formatTime(dur);
+
+            // Pre-load lyrics for this track
+            loadLyrics(track.title, track.artist);
+
+            // Notify native Android bridge of track and seek state (so notification player shows the restored song right away!)
+            if (window.AndroidBridge && typeof window.AndroidBridge.onTrackChange === 'function') {
+                window.AndroidBridge.onTrackChange(track.title, track.artist, track.album || '', track.coverUrl, dur);
+            }
+            if (window.AndroidBridge && typeof window.AndroidBridge.onPlaybackStateChange === 'function') {
+                window.AndroidBridge.onPlaybackStateChange(false, seekPos, dur);
+            }
+            updateMediaSessionMetadata(track);
+        } catch (e) {
+            console.error("restoreLastPlaybackState error:", e);
+        }
+    }
+
+    // Initial load: render Home songs & restore user's exact last played track
+    renderSongList('homeSongsList', initialTracks);
+    restoreLastPlaybackState();
+
     // Dynamically load personalized home recommendations based on user mood & taste
-    refreshPersonalizedHome(true);
+    refreshPersonalizedHome(false);
 </script>
 
 </body>
