@@ -18,6 +18,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <style>
         :root {
+            --android-safe-top: 0px;
+            --android-safe-bottom: 0px;
+            --safe-top: max(env(safe-area-inset-top, 0px), var(--android-safe-top, 0px));
+            --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--android-safe-bottom, 0px));
+            --safe-left: max(env(safe-area-inset-left, 0px), 0px);
+            --safe-right: max(env(safe-area-inset-right, 0px), 0px);
             --jamio-purple: #a855f7;
             --jamio-purple-bright: #c084fc;
             --jamio-glow: rgba(168, 85, 247, 0.4);
@@ -82,30 +88,16 @@
             padding: 0 !important;
         }
 
-        /* Hide Mockup Status Bar: Real phone's OS Status Bar / Notch / Dynamic Island renders natively */
+        /* Mockup Status Bar completely removed for native phone edge-to-edge immersion */
         .status-bar {
             display: none !important;
-        }
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 24px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            z-index: 10;
-        }
-
-        .status-bar .icons {
-            display: flex;
-            gap: 8px;
-            align-items: center;
         }
 
         /* App Header */
         .app-header {
-            padding-top: calc(env(safe-area-inset-top, 0px) + 14px);
-            padding-left: max(16px, env(safe-area-inset-left, 16px));
-            padding-right: max(16px, env(safe-area-inset-right, 16px));
+            padding-top: calc(var(--safe-top) + 12px);
+            padding-left: calc(var(--safe-left) + 16px);
+            padding-right: calc(var(--safe-right) + 16px);
             padding-bottom: 10px;
             display: flex;
             justify-content: space-between;
@@ -195,9 +187,9 @@
             overflow-y: auto;
             overflow-x: hidden;
             padding-top: 6px;
-            padding-left: max(16px, env(safe-area-inset-left, 16px));
-            padding-right: max(16px, env(safe-area-inset-right, 16px));
-            padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+            padding-left: calc(var(--safe-left) + 16px);
+            padding-right: calc(var(--safe-right) + 16px);
+            padding-bottom: calc(135px + var(--safe-bottom));
             scrollbar-width: none;
             scroll-behavior: smooth;
             -webkit-overflow-scrolling: touch;
@@ -670,18 +662,18 @@
         /* Mini Player - Clean Modern Floating Glass Capsule */
         .mini-player {
             position: absolute;
-            bottom: calc(68px + env(safe-area-inset-bottom, 0px));
-            left: max(10px, env(safe-area-inset-left, 10px));
-            right: max(10px, env(safe-area-inset-right, 10px));
-            background: rgba(20, 15, 30, 0.94);
+            bottom: calc(68px + var(--safe-bottom));
+            left: calc(var(--safe-left) + 10px);
+            right: calc(var(--safe-right) + 10px);
+            background: rgba(22, 17, 36, 0.94);
             backdrop-filter: blur(24px) saturate(180%);
             -webkit-backdrop-filter: blur(24px) saturate(180%);
             border-radius: 18px;
             padding: 9px 12px 10px;
             display: flex;
             flex-direction: column;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(168, 85, 247, 0.22);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
             cursor: pointer;
             transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
             z-index: 20;
@@ -925,9 +917,15 @@
 
         /* Full Screen Player Modal */
         .full-player {
-            position: absolute;
-            inset: 0;
-            background: #0d0a14;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: #090714;
             z-index: 100;
             display: flex;
             flex-direction: column;
@@ -1043,17 +1041,19 @@
             position: relative;
             z-index: 2;
             flex: 1;
+            width: 100%;
             height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             overflow-y: auto;
             overflow-x: hidden;
-            padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
-            padding-left: max(20px, env(safe-area-inset-left, 20px));
-            padding-right: max(20px, env(safe-area-inset-right, 20px));
-            padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            padding-top: calc(var(--safe-top) + 12px);
+            padding-left: calc(var(--safe-left) + 20px);
+            padding-right: calc(var(--safe-right) + 20px);
+            padding-bottom: calc(var(--safe-bottom) + 14px);
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
 
         .full-player-scroll::-webkit-scrollbar {
@@ -1787,10 +1787,12 @@
 
         /* Bottom Nav Bar */
         .bottom-nav {
-            height: calc(62px + env(safe-area-inset-bottom, 0px));
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: rgba(18, 18, 18, 0.98);
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            height: calc(62px + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
+            background: rgba(14, 11, 26, 0.96);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-top: 1px solid rgba(168, 85, 247, 0.12);
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -2092,8 +2094,14 @@
 
         /* Dedicated Fullscreen Immersive Lyrics View (Apple Music Karaoke Style) */
         .fullscreen-lyrics-overlay {
-            position: absolute;
-            inset: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             z-index: 120;
             background: #090714;
             display: flex;
@@ -2190,10 +2198,11 @@
             display: flex;
             flex-direction: column;
             height: 100%;
-            padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
-            padding-left: max(20px, env(safe-area-inset-left, 20px));
-            padding-right: max(20px, env(safe-area-inset-right, 20px));
-            padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+            width: 100%;
+            padding-top: calc(var(--safe-top) + 14px);
+            padding-left: calc(var(--safe-left) + 20px);
+            padding-right: calc(var(--safe-right) + 20px);
+            padding-bottom: calc(var(--safe-bottom) + 20px);
         }
 
         .fs-lyrics-header {
@@ -2460,15 +2469,6 @@
         <div class="ambient-orb ambient-orb-2" id="ambientOrb2"></div>
         <div class="ambient-orb ambient-orb-3" id="ambientOrb3"></div>
     </div>
-    <!-- Status Bar -->
-    <div class="status-bar">
-        <span id="clock">12:00</span>
-        <div class="icons">
-            <i class="fa-solid fa-wifi"></i>
-            <i class="fa-solid fa-signal"></i>
-            <i class="fa-solid fa-battery-full"></i>
-        </div>
-    </div>
 
     <!-- App Header -->
     <div class="app-header">
@@ -2551,14 +2551,14 @@
                 <button id="btnClearSearchInput" onclick="clearSearchInput()" style="display: none; position: absolute; right: 14px; top: 13px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px;"><i class="fa-solid fa-xmark"></i></button>
             </div>
 
-            <!-- Recent Search History -->
-            <div id="recentSearchesSection" style="margin-bottom: 16px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="font-size: 13px; font-weight: 700; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left" style="color: #c084fc; margin-right: 6px;"></i> Recent Searches</span>
-                    <button onclick="clearSearchHistory()" style="background: none; border: none; font-size: 11px; color: var(--text-muted); cursor: pointer; font-weight: 600;">Clear All</button>
+            <!-- Spotify-Style Recent Played Searches -->
+            <div id="recentSearchesSection" style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-size: 15px; font-weight: 700; color: #ffffff;"><i class="fa-solid fa-clock-rotate-left" style="color: #c084fc; margin-right: 8px;"></i> Recent Searches</span>
+                    <button onclick="clearAllRecentSearches()" style="background: none; border: none; font-size: 12px; color: var(--text-muted); cursor: pointer; font-weight: 600; padding: 4px 6px;">Clear all</button>
                 </div>
-                <div id="recentSearchesList" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                    <!-- History chips -->
+                <div id="recentSearchesList" style="display: flex; flex-direction: column; gap: 4px;">
+                    <!-- Spotify-style recent played song rows -->
                 </div>
             </div>
 
@@ -3879,7 +3879,12 @@
 
         const div = document.createElement('div');
         div.className = `song-item ${isCur ? 'playing' : ''}`;
-        div.onclick = () => playTrack(idx, list);
+        div.onclick = () => {
+            if (contextPlaylistId === 'search_results' || list === window.currentSearchResults) {
+                addSongToRecentSearches(song);
+            }
+            playTrack(idx, list);
+        };
 
         let actionButtons = '';
         if (contextPlaylistId && contextPlaylistId !== 'liked') {
@@ -5734,7 +5739,7 @@
                 document.getElementById('homeView').style.display = 'block';
             } else if (tab === 'search') {
                 document.getElementById('searchView').style.display = 'block';
-                renderSearchHistory();
+                renderRecentSearches();
                 document.getElementById('mainSearchInput').focus();
             } else if (tab === 'playlists') {
                 document.getElementById('playlistsView').style.display = 'block';
@@ -5748,60 +5753,144 @@
     });
 
     // ==========================================
-    // SEARCH & RECENT SEARCH HISTORY
+    // SPOTIFY-STYLE RECENT SEARCHES (PLAYED SONGS ONLY, 15-20 CAP)
     // ==========================================
-    let searchHistory = JSON.parse(localStorage.getItem('jamio_search_history') || '["Arijit Singh", "Diljit Dosanjh", "The Weeknd", "Karan Aujla"]');
+    let recentPlayedSearches = [];
+    try {
+        const stored = localStorage.getItem('jamio_recent_played_searches');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+                recentPlayedSearches = parsed;
+            }
+        }
+    } catch (_) {}
 
-    function renderSearchHistory() {
+    function addSongToRecentSearches(song) {
+        if (!song || !song.title) return;
+        const songObj = {
+            id: String(song.id || Date.now()),
+            title: song.title || 'Unknown Title',
+            artist: song.artist || 'Unknown Artist',
+            album: song.album || '',
+            coverUrl: song.coverUrl || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600',
+            audioUrl: song.audioUrl || '',
+            duration: song.duration || 180,
+            quality: song.quality || '320 KBPS'
+        };
+
+        // Remove previous instance if it exists (by id or normalized title + artist)
+        const normKey = (songObj.title + '---' + songObj.artist).toLowerCase();
+        recentPlayedSearches = [
+            songObj,
+            ...recentPlayedSearches.filter(s => {
+                const sKey = (s.title + '---' + s.artist).toLowerCase();
+                return String(s.id) !== songObj.id && sKey !== normKey;
+            })
+        ];
+
+        // Spotify FIFO: Cap at 20 items (newest at top, oldest dropped)
+        if (recentPlayedSearches.length > 20) {
+            recentPlayedSearches = recentPlayedSearches.slice(0, 20);
+        }
+
+        try {
+            localStorage.setItem('jamio_recent_played_searches', JSON.stringify(recentPlayedSearches));
+        } catch (_) {}
+
+        renderRecentSearches();
+    }
+
+    function removeSongFromRecentSearches(songId, event) {
+        if (event) event.stopPropagation();
+        recentPlayedSearches = recentPlayedSearches.filter(s => String(s.id) !== String(songId));
+        try {
+            localStorage.setItem('jamio_recent_played_searches', JSON.stringify(recentPlayedSearches));
+        } catch (_) {}
+        renderRecentSearches();
+    }
+
+    function clearAllRecentSearches() {
+        recentPlayedSearches = [];
+        try {
+            localStorage.setItem('jamio_recent_played_searches', JSON.stringify(recentPlayedSearches));
+        } catch (_) {}
+        renderRecentSearches();
+    }
+
+    function renderRecentSearches() {
         const container = document.getElementById('recentSearchesList');
         const section = document.getElementById('recentSearchesSection');
         if (!container || !section) return;
 
-        if (searchHistory.length === 0) {
+        const query = (mainSearchInput ? mainSearchInput.value : '').trim();
+        if (query.length > 0) {
             section.style.display = 'none';
             return;
         }
+
+        if (recentPlayedSearches.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
         section.style.display = 'block';
         container.innerHTML = '';
-        searchHistory.forEach(query => {
-            const chip = document.createElement('div');
-            chip.className = 'history-chip';
-            chip.innerHTML = `
-                <i class="fa-solid fa-clock-rotate-left" style="font-size:11px;"></i>
-                <span>${query}</span>
-                <span class="history-chip-remove" title="Remove"><i class="fa-solid fa-xmark"></i></span>
+
+        recentPlayedSearches.forEach((song, idx) => {
+            const row = document.createElement('div');
+            row.className = 'recent-search-row';
+            row.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 10px;
+                margin-bottom: 6px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                cursor: pointer;
+                transition: background 0.18s ease, transform 0.15s ease;
             `;
-            const removeBtn = chip.querySelector('.history-chip-remove');
-            removeBtn.onclick = (e) => {
-                e.stopPropagation();
-                removeSearchHistory(query);
+
+            row.onmouseenter = () => { row.style.background = 'rgba(255, 255, 255, 0.08)'; };
+            row.onmouseleave = () => { row.style.background = 'rgba(255, 255, 255, 0.03)'; };
+
+            const fallbackCover = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600';
+            const coverSrc = song.coverUrl || fallbackCover;
+
+            row.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                    <div style="position: relative; width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #1a162b;">
+                        <img src="${coverSrc}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${fallbackCover}'">
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 14px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${song.title}</div>
+                        <div style="font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">Song • ${song.artist}</div>
+                    </div>
+                </div>
+                <button class="btn-remove-recent" title="Remove" style="background: none; border: none; color: var(--text-muted); width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 50%; font-size: 14px; flex-shrink: 0; transition: color 0.15s;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+
+            row.onclick = () => {
+                // Tapping immediately plays song and refreshes it to top of recent searches
+                addSongToRecentSearches(song);
+                playTrack(0, [song, ...recentPlayedSearches.filter(s => s.id !== song.id)], true);
             };
-            chip.onclick = () => {
-                mainSearchInput.value = query;
-                executeSearch(query);
-            };
-            container.appendChild(chip);
+
+            const removeBtn = row.querySelector('.btn-remove-recent');
+            if (removeBtn) {
+                removeBtn.onmouseenter = () => { removeBtn.style.color = '#ef4444'; };
+                removeBtn.onmouseleave = () => { removeBtn.style.color = 'var(--text-muted)'; };
+                removeBtn.onclick = (e) => {
+                    removeSongFromRecentSearches(song.id, e);
+                };
+            }
+
+            container.appendChild(row);
         });
-    }
-
-    function addSearchHistory(query) {
-        if (!query || query.trim().length === 0) return;
-        const q = query.trim();
-        searchHistory = [q, ...searchHistory.filter(item => item.toLowerCase() !== q.toLowerCase())].slice(0, 8);
-        localStorage.setItem('jamio_search_history', JSON.stringify(searchHistory));
-        renderSearchHistory();
-    }
-
-    function removeSearchHistory(query) {
-        searchHistory = searchHistory.filter(item => item.toLowerCase() !== query.toLowerCase());
-        localStorage.setItem('jamio_search_history', JSON.stringify(searchHistory));
-        renderSearchHistory();
-    }
-
-    function clearSearchHistory() {
-        searchHistory = [];
-        localStorage.setItem('jamio_search_history', JSON.stringify(searchHistory));
-        renderSearchHistory();
     }
 
     function clearSearchInput() {
@@ -5811,7 +5900,7 @@
         const hdr = document.getElementById('searchResultsHeader');
         if (hdr) hdr.style.display = 'none';
         renderSongList('searchSongsList', []);
-        renderSearchHistory();
+        renderRecentSearches();
     }
 
     async function executeSearch(query) {
@@ -5826,11 +5915,12 @@
         const hdr = document.getElementById('searchResultsHeader');
         if (hdr) hdr.style.display = 'flex';
         document.getElementById('searchResultTitle').innerText = `Results for "${query}"`;
-        addSearchHistory(query);
+        // NOTE: Searching alone does NOT add to history; ONLY playing a song does!
         try {
             const data = await jamioFetchApi('search', { q: query });
             if (data && data.success && data.results) {
-                renderSongList('searchSongsList', data.results);
+                window.currentSearchResults = data.results;
+                renderSongList('searchSongsList', data.results, 'search_results');
             }
         } catch (err) {
             console.log(err);
@@ -5854,8 +5944,8 @@
         }, 320);
     };
 
-    // Initial search history render
-    renderSearchHistory();
+    // Initial recent searches render
+    renderRecentSearches();
 
     // Expand / Collapse Full Player
     miniPlayer.onclick = () => {
