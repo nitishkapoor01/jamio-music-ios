@@ -940,14 +940,15 @@
             z-index: 100;
             display: flex;
             flex-direction: column;
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1), visibility 0.35s;
+            transform: translate3d(0, 100%, 0);
+            transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.3, 1), visibility 0.32s;
+            will-change: transform;
             overflow: hidden;
             pointer-events: none;
             visibility: hidden;
         }
 
-        /* Dynamic Ambient Album Art Blur Backdrop - Living Liquid Canvas */
+        /* Dynamic Ambient Album Art Blur Backdrop - Living Liquid Canvas (GPU Optimized) */
         .player-ambient-backdrop {
             position: absolute;
             inset: 0;
@@ -955,25 +956,26 @@
             pointer-events: none;
             z-index: 0;
             background: #090714;
+            transform: translateZ(0);
         }
 
         .ambient-blur-img {
             position: absolute;
-            inset: -90px;
+            inset: -40px;
             background-size: cover;
             background-position: center;
-            filter: blur(50px) saturate(230%) brightness(0.68);
-            -webkit-filter: blur(50px) saturate(230%) brightness(0.68);
-            transform: scale(1.28);
-            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            filter: blur(28px) brightness(0.68);
+            -webkit-filter: blur(28px) brightness(0.68);
+            transform: scale(1.15) translateZ(0);
+            transition: opacity 0.6s ease;
             will-change: opacity, transform;
             animation: ambientCanvasFloat 24s ease-in-out infinite alternate;
         }
 
         @keyframes ambientCanvasFloat {
-            0% { transform: scale(1.24) translate(0, 0) rotate(0deg); }
-            50% { transform: scale(1.38) translate(20px, -24px) rotate(4deg); }
-            100% { transform: scale(1.28) translate(-18px, 18px) rotate(-3deg); }
+            0% { transform: scale(1.15) translate3d(0, 0, 0); }
+            50% { transform: scale(1.22) translate3d(12px, -14px, 0); }
+            100% { transform: scale(1.18) translate3d(-10px, 10px, 0); }
         }
 
         .ambient-layer-a {
@@ -984,23 +986,22 @@
             opacity: 0;
         }
 
-        /* Living Abstract Fluid Aurora Mesh Orbs */
+        /* Living Abstract Fluid Aurora Mesh Orbs (Hardware composited gradients) */
         .player-aurora-orb {
             position: absolute;
             border-radius: 50%;
-            filter: blur(75px);
-            -webkit-filter: blur(75px);
-            opacity: 0.52;
+            opacity: 0.45;
             pointer-events: none;
             z-index: 1;
-            mix-blend-mode: screen;
+            transform: translateZ(0);
+            will-change: transform;
             animation: orbFloat 18s ease-in-out infinite alternate;
         }
 
         .player-orb-1 {
             width: 320px;
             height: 320px;
-            background: radial-gradient(circle, rgba(168, 85, 247, 0.75) 0%, rgba(147, 51, 234, 0.2) 60%, transparent 80%);
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.65) 0%, rgba(147, 51, 234, 0.18) 50%, transparent 75%);
             top: -50px;
             left: -40px;
             animation-duration: 16s;
@@ -1009,7 +1010,7 @@
         .player-orb-2 {
             width: 350px;
             height: 350px;
-            background: radial-gradient(circle, rgba(236, 72, 153, 0.7) 0%, rgba(219, 39, 119, 0.2) 60%, transparent 80%);
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.6) 0%, rgba(219, 39, 119, 0.16) 50%, transparent 75%);
             bottom: 30px;
             right: -60px;
             animation-duration: 22s;
@@ -1019,7 +1020,7 @@
         .player-orb-3 {
             width: 280px;
             height: 280px;
-            background: radial-gradient(circle, rgba(56, 189, 248, 0.6) 0%, rgba(99, 102, 241, 0.25) 60%, transparent 80%);
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.5) 0%, rgba(99, 102, 241, 0.18) 50%, transparent 75%);
             top: 35%;
             left: 25%;
             animation-duration: 20s;
@@ -1027,9 +1028,9 @@
         }
 
         @keyframes orbFloat {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(30px, -40px) scale(1.18); }
-            100% { transform: translate(-25px, 35px) scale(0.92); }
+            0% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(20px, -25px, 0); }
+            100% { transform: translate3d(-15px, 20px, 0); }
         }
 
         /* Seamless organic vignette: keeps text, 3D carousel, controls and lyrics 100% crisp and readable */
@@ -1040,10 +1041,11 @@
                         linear-gradient(180deg, rgba(9, 7, 20, 0.42) 0%, transparent 18%, rgba(9, 7, 20, 0.30) 65%, rgba(9, 7, 20, 0.90) 100%);
             z-index: 2;
             pointer-events: none;
+            transform: translateZ(0);
         }
 
         .full-player.expanded {
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
             pointer-events: auto;
             visibility: visible;
         }
@@ -1684,28 +1686,29 @@
             background: #f0f0f0;
         }
 
-        /* Modern Glass Lyrics Card (Teaser preview: 85% Song Interface, 15% Lyrics Peek) */
+        /* Modern Glass Lyrics Card (Teaser preview: 85% Song Interface, 15% Lyrics Peek - GPU Optimized) */
         .lyrics-section {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(28px) saturate(180%);
-            -webkit-backdrop-filter: blur(28px) saturate(180%);
+            background: rgba(22, 17, 36, 0.78);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
             border-radius: 18px;
             padding: 10px 14px 12px;
             border: 1px solid rgba(255, 255, 255, 0.16);
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             margin-bottom: 4px;
-            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
             position: relative;
             overflow: hidden;
             flex-shrink: 0;
             cursor: pointer;
+            transform: translateZ(0);
         }
 
         .lyrics-section::before {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(236, 72, 153, 0.1) 50%, rgba(56, 189, 248, 0.08) 100%);
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(236, 72, 153, 0.08) 50%, rgba(56, 189, 248, 0.06) 100%);
             pointer-events: none;
             z-index: 0;
         }
@@ -1779,7 +1782,7 @@
             font-size: 11px;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transition: background 0.2s ease, transform 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -1801,6 +1804,7 @@
             scrollbar-width: none;
             position: relative;
             z-index: 1;
+            transform: translateZ(0);
         }
 
         .lyrics-body::-webkit-scrollbar {
@@ -1814,60 +1818,31 @@
         .lyric-line {
             font-size: 14.5px;
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.4);
+            color: rgba(255, 255, 255, 0.45);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.22s ease, color 0.22s ease;
             line-height: 1.35;
             padding: 2px 0;
             border-radius: 0;
             background: transparent !important;
             opacity: 0.5;
             transform-origin: left center;
+            transform: translateZ(0);
+            will-change: transform, opacity;
+            contain: content;
         }
 
         .lyric-line:hover {
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.9);
             opacity: 0.9;
         }
 
         .lyric-line.active {
-            font-size: 16px;
             font-weight: 800;
             color: #ffffff;
             opacity: 1;
-            text-shadow: 0 2px 10px rgba(168, 85, 247, 0.7);
-        }
-            font-size: 16.5px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.35);
-            cursor: pointer;
-            transition: color 0.35s ease, opacity 0.35s ease, transform 0.35s ease, font-size 0.35s ease, filter 0.35s ease;
-            line-height: 1.5;
-            padding: 8px 4px;
-            border-radius: 0;
-            background: transparent !important;
-            opacity: 0.5;
-            filter: blur(0.3px);
-            transform-origin: left center;
-        }
-
-        .lyric-line:hover {
-            color: rgba(255, 255, 255, 0.85);
-            opacity: 0.9;
-            filter: none;
-        }
-
-        .lyric-line.active {
-            font-size: 19.5px;
-            font-weight: 800;
-            color: #ffffff;
-            opacity: 1;
-            filter: none;
-            background: transparent !important;
-            box-shadow: none !important;
-            text-shadow: 0 0 16px rgba(255, 255, 255, 0.5);
-            transform: scale(1.03);
-            transform-origin: left center;
+            transform: scale(1.06) translateZ(0);
+            text-shadow: 0 0 12px rgba(168, 85, 247, 0.7);
         }
 
         .lyrics-loading {
@@ -2184,7 +2159,7 @@
             border-radius: 12px;
         }
 
-        /* Dedicated Fullscreen Immersive Lyrics View (Apple Music Karaoke Style) */
+        /* Dedicated Fullscreen Immersive Lyrics View (Apple Music Karaoke Style - GPU Optimized) */
         .fullscreen-lyrics-overlay {
             position: fixed;
             top: 0;
@@ -2199,54 +2174,58 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            transform: translateY(100%);
-            transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.3, 1);
+            transform: translate3d(0, 100%, 0);
+            transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.3, 1);
+            will-change: transform;
         }
 
         .fullscreen-lyrics-overlay.active {
-            transform: translateY(0);
+            transform: translate3d(0, 0, 0);
         }
 
-        /* Abstract Flowing Aurora Mesh with Dynamic Album Artwork */
+        /* Abstract Flowing Aurora Mesh with Dynamic Album Artwork (GPU Composited) */
         .abstract-aurora-bg {
             position: absolute;
             inset: 0;
             overflow: hidden;
             pointer-events: none;
             z-index: 1;
+            transform: translateZ(0);
         }
 
         .fs-ambient-blur-img {
             position: absolute;
-            inset: -90px;
+            inset: -40px;
             background-size: cover;
             background-position: center;
-            filter: blur(52px) saturate(230%) brightness(0.60);
-            -webkit-filter: blur(52px) saturate(230%) brightness(0.60);
-            transform: scale(1.3);
+            filter: blur(28px) brightness(0.60);
+            -webkit-filter: blur(28px) brightness(0.60);
+            transform: scale(1.15) translateZ(0);
             animation: fsCanvasFloat 25s ease-in-out infinite alternate;
+            will-change: transform;
             z-index: 0;
         }
 
         @keyframes fsCanvasFloat {
-            0% { transform: scale(1.25) translate(0, 0) rotate(0deg); }
-            50% { transform: scale(1.4) translate(-25px, 20px) rotate(-3deg); }
-            100% { transform: scale(1.3) translate(20px, -20px) rotate(3deg); }
+            0% { transform: scale(1.15) translate3d(0, 0, 0); }
+            50% { transform: scale(1.22) translate3d(-15px, 12px, 0); }
+            100% { transform: scale(1.18) translate3d(12px, -12px, 0); }
         }
 
         .aurora-blob {
             position: absolute;
             border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.42;
-            mix-blend-mode: screen;
+            opacity: 0.35;
+            pointer-events: none;
+            transform: translateZ(0);
+            will-change: transform;
             animation: auroraFlow 16s ease-in-out infinite alternate;
         }
 
         .aurora-blob-1 {
             width: 320px;
             height: 320px;
-            background: radial-gradient(circle, #8b5cf6, transparent 70%);
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.65) 0%, rgba(139, 92, 246, 0.16) 50%, transparent 75%);
             top: -60px;
             left: -60px;
         }
@@ -2254,7 +2233,7 @@
         .aurora-blob-2 {
             width: 360px;
             height: 360px;
-            background: radial-gradient(circle, #ec4899, transparent 70%);
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.6) 0%, rgba(236, 72, 153, 0.16) 50%, transparent 75%);
             bottom: 40px;
             right: -80px;
             animation-duration: 20s;
@@ -2264,7 +2243,7 @@
         .aurora-blob-3 {
             width: 260px;
             height: 260px;
-            background: radial-gradient(circle, #38bdf8, transparent 70%);
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.5) 0%, rgba(56, 189, 248, 0.14) 50%, transparent 75%);
             top: 40%;
             left: 20%;
             animation-duration: 24s;
@@ -2276,12 +2255,13 @@
             background: linear-gradient(180deg, rgba(9, 7, 20, 0.72) 0%, rgba(9, 7, 20, 0.35) 25%, rgba(9, 7, 20, 0.35) 75%, rgba(9, 7, 20, 0.92) 100%);
             z-index: 1;
             pointer-events: none;
+            transform: translateZ(0);
         }
 
         @keyframes auroraFlow {
-            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-            50% { transform: translate(35px, -45px) scale(1.15) rotate(90deg); }
-            100% { transform: translate(-30px, 30px) scale(0.9) rotate(180deg); }
+            0% { transform: translate3d(0, 0, 0); }
+            50% { transform: translate3d(20px, -24px, 0); }
+            100% { transform: translate3d(-18px, 18px, 0); }
         }
 
         .fs-lyrics-content {
@@ -2360,37 +2340,34 @@
         }
 
         .fs-lyric-line {
-            font-size: 22px;
+            font-size: 23px;
             font-weight: 700;
-            color: rgba(255, 255, 255, 0.3);
+            color: rgba(255, 255, 255, 0.35);
             cursor: pointer;
             line-height: 1.45;
-            transition: color 0.35s ease, opacity 0.35s ease, transform 0.35s ease, font-size 0.35s ease, filter 0.35s ease;
+            transition: transform 0.24s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.24s ease, color 0.24s ease;
             transform-origin: left center;
-            padding: 10px 4px;
+            padding: 8px 4px;
             border-radius: 0;
             background: transparent !important;
             opacity: 0.45;
-            filter: blur(0.4px);
+            transform: translateZ(0);
+            will-change: transform, opacity;
+            contain: content;
         }
 
         .fs-lyric-line:hover {
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.9);
             opacity: 0.9;
-            filter: none;
         }
 
         .fs-lyric-line.active {
-            font-size: 27px;
             font-weight: 800;
             color: #ffffff;
             opacity: 1;
-            filter: none;
-            background: transparent !important;
-            box-shadow: none !important;
-            transform: scale(1.035);
+            transform: scale(1.08) translateZ(0);
             transform-origin: left center;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+            text-shadow: 0 0 18px rgba(255, 255, 255, 0.6);
         }
 
         /* Fluid Draggable Fast-Scrubber for Instant Rapid List Navigation */
@@ -3917,6 +3894,8 @@
     let lastActiveLyricIndex = -1;
     let isLyricsCollapsed = false;
     let isLyricsFullscreen = false;
+    let cardLyricElements = [];
+    let fsLyricElements = [];
 
     // Active song for "Add to playlist" sheet
     let songForSheet = null;
@@ -5130,11 +5109,13 @@
     }
 
     let currentLyricsRequestId = 0;
-    // Lyrics Engine: Load Time-Synced Lyrics
+    // Lyrics Engine: Load Time-Synced Lyrics (GPU & DOM Optimized)
     async function loadLyrics(title, artist) {
         const requestId = ++currentLyricsRequestId;
         currentLyrics = [];
         lastActiveLyricIndex = -1;
+        cardLyricElements = [];
+        fsLyricElements = [];
         const container = document.getElementById('lyricsBody');
         const fsContainer = document.getElementById('fsLyricsBody');
         container.innerHTML = '<div class="lyrics-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading synchronized lyrics...</div>';
@@ -5155,28 +5136,39 @@
                 currentLyrics = data.lines;
                 container.innerHTML = '';
                 fsContainer.innerHTML = '';
+                cardLyricElements = [];
+                fsLyricElements = [];
+
+                const cardFrag = document.createDocumentFragment();
+                const fsFrag = document.createDocumentFragment();
 
                 data.lines.forEach((l, idx) => {
                     // Regular card lyric line
                     const div = document.createElement('div');
                     div.className = 'lyric-line' + (idx === 0 ? ' active' : '');
                     div.innerText = l.text;
-                    div.onclick = () => {
+                    div.onclick = (e) => {
+                        e.stopPropagation();
                         audio.currentTime = l.time;
                         audio.play();
                     };
-                    container.appendChild(div);
+                    cardLyricElements.push(div);
+                    cardFrag.appendChild(div);
 
                     // Fullscreen immersive lyric line
                     const fsDiv = document.createElement('div');
                     fsDiv.className = 'fs-lyric-line' + (idx === 0 ? ' active' : '');
                     fsDiv.innerText = l.text;
-                    fsDiv.onclick = () => {
+                    fsDiv.onclick = (e) => {
+                        e.stopPropagation();
                         audio.currentTime = l.time;
                         audio.play();
                     };
-                    fsContainer.appendChild(fsDiv);
+                    fsLyricElements.push(fsDiv);
+                    fsFrag.appendChild(fsDiv);
                 });
+                container.appendChild(cardFrag);
+                fsContainer.appendChild(fsFrag);
                 container.scrollTop = 0;
                 fsContainer.scrollTop = 0;
             } else if (data.plain && data.plain.trim().length > 0) {
@@ -5199,7 +5191,7 @@
         }
     }
 
-    // Audio Progress & Lyrics Highlighting
+    // Audio Progress & Lyrics Highlighting (Optimized O(1) Updates)
     audio.ontimeupdate = () => {
         if (audio.duration) {
             const pct = (audio.currentTime / audio.duration) * 100;
@@ -5209,7 +5201,7 @@
             document.getElementById('totalTime').innerText = formatTime(audio.duration);
             updateMediaSessionPositionState(false);
 
-            // Time-Synced Lyrics Auto-highlighting & Scrolling (Both Card and Fullscreen)
+            // Time-Synced Lyrics Auto-highlighting & Scrolling (Fast cached DOM lookup with requestAnimationFrame)
             if (currentLyrics.length > 0) {
                 const curTime = audio.currentTime;
                 let activeIndex = -1;
@@ -5222,36 +5214,43 @@
                 }
 
                 if (activeIndex !== lastActiveLyricIndex && activeIndex >= 0) {
+                    const prevIndex = lastActiveLyricIndex;
                     lastActiveLyricIndex = activeIndex;
 
-                    // 1. Regular Player Card Lyrics (Scroll ONLY inside the card, NEVER scroll the player screen!)
+                    // 1. Regular Player Card Lyrics
                     const container = document.getElementById('lyricsBody');
-                    if (container && !isLyricsCollapsed) {
-                        const lines = container.querySelectorAll('.lyric-line');
-                        lines.forEach((l, idx) => {
-                            if (idx === activeIndex) {
-                                l.classList.add('active');
-                                const targetTop = l.offsetTop - container.offsetTop - (container.clientHeight / 2) + (l.clientHeight / 2);
-                                container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-                            } else {
-                                l.classList.remove('active');
-                            }
+                    if (container && !isLyricsCollapsed && cardLyricElements[activeIndex]) {
+                        if (prevIndex >= 0 && cardLyricElements[prevIndex]) {
+                            cardLyricElements[prevIndex].classList.remove('active');
+                        }
+                        const curEl = cardLyricElements[activeIndex];
+                        curEl.classList.add('active');
+
+                        requestAnimationFrame(() => {
+                            const targetTop = curEl.offsetTop - (container.clientHeight / 2) + (curEl.clientHeight / 2);
+                            container.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
                         });
                     }
 
-                    // 2. Fullscreen Immersive Lyrics View (Scroll ONLY inside fsLyricsBody)
-                    const fsContainer = document.getElementById('fsLyricsBody');
-                    if (fsContainer) {
-                        const fsLines = fsContainer.querySelectorAll('.fs-lyric-line');
-                        fsLines.forEach((l, idx) => {
-                            if (idx === activeIndex) {
-                                l.classList.add('active');
-                                const targetTop = l.offsetTop - fsContainer.offsetTop - (fsContainer.clientHeight / 2) + (l.clientHeight / 2);
-                                fsContainer.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-                            } else {
-                                l.classList.remove('active');
+                    // 2. Fullscreen Immersive Lyrics View
+                    const fsOverlay = document.getElementById('fullscreenLyricsOverlay');
+                    const isFsOpen = fsOverlay && fsOverlay.classList.contains('active');
+                    if (fsLyricElements[activeIndex]) {
+                        if (prevIndex >= 0 && fsLyricElements[prevIndex]) {
+                            fsLyricElements[prevIndex].classList.remove('active');
+                        }
+                        const curFsEl = fsLyricElements[activeIndex];
+                        curFsEl.classList.add('active');
+
+                        if (isFsOpen) {
+                            const fsContainer = document.getElementById('fsLyricsBody');
+                            if (fsContainer) {
+                                requestAnimationFrame(() => {
+                                    const targetTop = curFsEl.offsetTop - (fsContainer.clientHeight / 2) + (curFsEl.clientHeight / 2);
+                                    fsContainer.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+                                });
                             }
-                        });
+                        }
                     }
                 }
             }
@@ -5349,13 +5348,17 @@
         document.getElementById('fullscreenLyricsOverlay').classList.add('active');
         // Immediate smooth scroll to active lyric line in fullscreen view
         setTimeout(() => {
-            const fsContainer = document.getElementById('fsLyricsBody');
-            const activeLine = fsContainer?.querySelector('.fs-lyric-line.active');
-            if (activeLine && fsContainer) {
-                const targetTop = activeLine.offsetTop - fsContainer.offsetTop - (fsContainer.clientHeight / 2) + (activeLine.clientHeight / 2);
-                fsContainer.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+            if (lastActiveLyricIndex >= 0 && fsLyricElements[lastActiveLyricIndex]) {
+                const fsContainer = document.getElementById('fsLyricsBody');
+                const activeLine = fsLyricElements[lastActiveLyricIndex];
+                if (activeLine && fsContainer) {
+                    requestAnimationFrame(() => {
+                        const targetTop = activeLine.offsetTop - (fsContainer.clientHeight / 2) + (activeLine.clientHeight / 2);
+                        fsContainer.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+                    });
+                }
             }
-        }, 120);
+        }, 60);
     };
 
     document.getElementById('btnCloseFsLyrics').onclick = () => {
