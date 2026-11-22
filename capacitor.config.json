@@ -9,8 +9,9 @@
     }
   },
   "ios": {
-    "contentInset": "always",
+    "contentInset": "never",
     "allowsLinkPreview": false,
-    "scrollEnabled": true
+    "scrollEnabled": false,
+    "backgroundColor": "#090714"
   }
 }
