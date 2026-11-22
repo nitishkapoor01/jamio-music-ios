@@ -3952,11 +3952,16 @@
 
     // Clock
     function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const el = document.getElementById('clock');
+        if (el) {
+            const now = new Date();
+            el.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
     }
-    setInterval(updateClock, 1000);
-    updateClock();
+    if (document.getElementById('clock')) {
+        setInterval(updateClock, 1000);
+        updateClock();
+    }
 
     // Render Song Item Row Component
     function createSongRow(song, idx, list, contextPlaylistId = null) {
