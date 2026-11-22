@@ -1507,28 +1507,31 @@
         }
 
         .eras-reorder-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             color: var(--text-secondary);
-            width: 26px;
-            height: 26px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 10px;
+            font-size: 12px;
             transition: all 0.15s ease;
+            touch-action: manipulation;
         }
 
-        .eras-reorder-btn:hover:not(:disabled) {
-            background: rgba(168, 85, 247, 0.25);
+        .eras-reorder-btn:hover:not(:disabled),
+        .eras-reorder-btn:active:not(:disabled) {
+            background: rgba(168, 85, 247, 0.35);
             border-color: #a855f7;
             color: #ffffff;
+            transform: scale(1.08);
         }
 
         .eras-reorder-btn:disabled {
-            opacity: 0.22;
+            opacity: 0.18;
             cursor: default;
         }
 
@@ -1536,20 +1539,140 @@
             background: none;
             border: none;
             color: var(--text-muted);
-            width: 26px;
-            height: 26px;
+            width: 32px;
+            height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
             transition: all 0.15s ease;
         }
 
-        .eras-remove-queue-btn:hover {
+        .eras-remove-queue-btn:hover,
+        .eras-remove-queue-btn:active {
             color: #ef4444;
-            background: rgba(239, 68, 68, 0.18);
+            background: rgba(239, 68, 68, 0.2);
+            transform: scale(1.08);
+        }
+
+        .queue-badge-pill {
+            background: #a855f7;
+            color: #ffffff;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 1px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            display: inline-block;
+            box-shadow: 0 0 8px rgba(168, 85, 247, 0.6);
+        }
+
+        /* Apple-Style Smooth View Transitions */
+        @keyframes appleTabIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.985) translateY(5px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .view-panel {
+            display: none;
+            opacity: 0;
+            transform: scale(0.985) translateY(5px);
+            will-change: opacity, transform;
+        }
+
+        .view-panel.active {
+            display: block !important;
+            animation: appleTabIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Apple-Style Floating Queue Notification */
+        .jamio-queue-toast {
+            position: fixed;
+            top: calc(var(--safe-top) + 16px);
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px) scale(0.92);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 2500;
+            background: rgba(22, 17, 36, 0.95);
+            backdrop-filter: blur(24px) saturate(190%);
+            -webkit-backdrop-filter: blur(24px) saturate(190%);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 24px rgba(168, 85, 247, 0.35);
+            border-radius: 40px;
+            padding: 8px 16px 8px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: transform 0.32s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.32s ease;
+            max-width: 90vw;
+        }
+
+        .jamio-queue-toast.visible {
+            transform: translateX(-50%) translateY(0) scale(1);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .queue-toast-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .queue-toast-content {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .queue-toast-title {
+            font-size: 12px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.2px;
+        }
+
+        .queue-toast-subtitle {
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 170px;
+        }
+
+        .queue-toast-action {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 5px 12px;
+            border-radius: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.15s ease;
+        }
+
+        .queue-toast-action:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .eras-drawer-index {
@@ -2561,15 +2684,16 @@
     <div class="content-area" id="contentArea">
 
         <!-- VIEW 1: HOME SCREEN -->
-        <div id="homeView">
-            <!-- Filter Pills -->
-            <div class="filter-chips">
-                <div class="filter-chip active" data-filter="all">All</div>
-                <div class="filter-chip" data-filter="Arijit Singh">Bollywood Hits</div>
-                <div class="filter-chip" data-filter="Diljit Dosanjh">Punjabi 101</div>
-                <div class="filter-chip" data-filter="Taylor Swift">Global Pop</div>
-                <div class="filter-chip" data-filter="The Weeknd">Synthwave / R&B</div>
-                <div class="filter-chip" data-filter="Lo-Fi Beats">Chill Lo-Fi</div>
+        <div id="homeView" class="view-panel active">
+            <!-- Jump Back In (User Listening Memory & History) -->
+            <div id="homeJumpBackInSection" style="display: none; margin-bottom: 20px;">
+                <div class="section-header">
+                    <span class="section-title">Jump Back In</span>
+                    <span class="section-tag" style="color: #c084fc;">YOUR RECENT VIBES</span>
+                </div>
+                <div class="carousel-row" id="homeJumpBackInCarousel">
+                    <!-- Populated dynamically from user listening history -->
+                </div>
             </div>
 
             <!-- Heavy Rotation Vibe Carousel (Dynamically Adapted to User Mood & Taste) -->
@@ -2613,7 +2737,7 @@
         </div>
 
         <!-- VIEW 2: SEARCH SCREEN -->
-        <div id="searchView" style="display: none;">
+        <div id="searchView" class="view-panel" style="display: none;">
             <div class="section-title" style="margin-bottom: 12px; font-size: 22px;">Search</div>
             <div style="position: relative; margin-bottom: 14px;">
                 <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 16px; top: 15px; color: var(--text-muted);"></i>
@@ -2641,7 +2765,7 @@
         </div>
 
         <!-- VIEW 3: PLAYLISTS SCREEN (Dedicated Tab!) -->
-        <div id="playlistsView" style="display: none;">
+        <div id="playlistsView" class="view-panel" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <div class="section-title" style="font-size: 22px;">Your Playlists</div>
                 <button class="mode-badge" id="btnCreatePlaylistModal" style="background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%); color: #fff; font-weight: 700;">
@@ -2678,7 +2802,7 @@
         </div>
 
         <!-- VIEW 4: PLAYLIST DETAIL SCREEN (Inside Playlists) -->
-        <div id="playlistDetailView" style="display: none;">
+        <div id="playlistDetailView" class="view-panel" style="display: none;">
             <button class="btn-action" onclick="closePlaylistDetail()" style="margin-bottom: 10px; font-size: 18px; color: #fff;">
                 <i class="fa-solid fa-arrow-left"></i> Back to Playlists
             </button>
@@ -2724,7 +2848,7 @@
         </div>
 
         <!-- VIEW 5: OFFLINE DOWNLOADS SCREEN -->
-        <div id="downloadsView" style="display: none;">
+        <div id="downloadsView" class="view-panel" style="display: none;">
             <div class="section-title" style="margin-bottom: 6px; font-size: 22px;">Offline Music</div>
             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
                 True Local Storage: Listen in Airplane mode with 0 mobile data.
@@ -2867,7 +2991,7 @@
                     <button class="btn-action" id="fullLikeBtn" title="Favorite Song" style="font-size: 19px; margin-right: 6px;">
                         <i class="fa-regular fa-heart"></i>
                     </button>
-                    <button class="btn-action" id="fullAddQueueBtn" onclick="addToQueue(event, currentPlaylist[currentIndex])" title="Add to Queue" style="font-size: 16px; margin-right: 6px; color: #38bdf8;">
+                    <button class="btn-action" id="fullAddQueueBtn" onclick="addToQueue(event, currentPlaylist[currentIndex])" title="Add to Queue" style="font-size: 16px; margin-right: 6px; color: #38bdf8; position: relative;">
                         <i class="fa-solid fa-list-check"></i>
                     </button>
                     <button class="btn-action" id="fullAddPlaylistBtn" title="Add to Playlist" style="font-size: 17px; margin-right: 8px;">
@@ -2876,6 +3000,7 @@
                     <button class="eras-tracklist-btn" id="btnToggleTracklist" onclick="toggleTracklistDrawer()">
                         <i class="fa-solid fa-bars-staggered"></i>
                         <span>QUEUE</span>
+                        <span class="queue-badge-pill" id="queueCountBadge">0</span>
                     </button>
                 </div>
             </div>
@@ -2919,7 +3044,7 @@
                 <button class="control-btn" id="btnRepeat"><i class="fa-solid fa-repeat"></i></button>
             </div>
 
-            <!-- Modern Glass Lyrics Card -->
+            <!-- Modern Glass Lyrics Card (Integrated Seamlessly) -->
             <div class="lyrics-section" id="lyricsSection">
                 <div class="lyrics-top-bar">
                     <div class="lyrics-title-text">
@@ -2940,6 +3065,16 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Dynamic Apple-Style Queue Toast Notification -->
+    <div class="jamio-queue-toast" id="jamioQueueToast">
+        <div class="queue-toast-icon"><i class="fa-solid fa-list-check"></i></div>
+        <div class="queue-toast-content">
+            <div class="queue-toast-title">Added to Queue • Playing Next</div>
+            <div class="queue-toast-subtitle" id="queueToastSong">Song Title</div>
+        </div>
+        <button class="queue-toast-action" onclick="openQueueFromToast()">View Queue</button>
     </div>
 
     <!-- Bottom Navigation Bar (Home, Search, Playlists, Offline) -->
@@ -3233,12 +3368,182 @@
         };
     }
 
+    // ========================================================
+    // UNIVERSAL OFFLINE AUDIO ENGINE (INDEXEDDB BLOB STORAGE)
+    // ========================================================
+    const JamioAudioDB = {
+        dbName: 'jamio_offline_audio_db',
+        version: 1,
+        dbPromise: null,
+
+        getDB() {
+            if (!this.dbPromise) {
+                this.dbPromise = new Promise((resolve, reject) => {
+                    const req = indexedDB.open(this.dbName, this.version);
+                    req.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        if (!db.objectStoreNames.contains('tracks')) {
+                            db.createObjectStore('tracks', { keyPath: 'id' });
+                        }
+                    };
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e);
+                });
+            }
+            return this.dbPromise;
+        },
+
+        async saveTrackAudio(id, blob, metadata = {}) {
+            try {
+                const db = await this.getDB();
+                return new Promise((resolve, reject) => {
+                    const tx = db.transaction('tracks', 'readwrite');
+                    const store = tx.objectStore('tracks');
+                    const req = store.put({ id: String(id), blob: blob, meta: metadata, time: Date.now() });
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = () => reject(req.error);
+                });
+            } catch (e) {
+                console.error('IndexedDB saveTrackAudio error:', e);
+                return false;
+            }
+        },
+
+        async getTrackBlob(id) {
+            try {
+                const db = await this.getDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('tracks', 'readonly');
+                    const store = tx.objectStore('tracks');
+                    const req = store.get(String(id));
+                    req.onsuccess = () => resolve(req.result?.blob || null);
+                    req.onerror = () => resolve(null);
+                });
+            } catch (e) {
+                return null;
+            }
+        },
+
+        async deleteTrack(id) {
+            try {
+                const db = await this.getDB();
+                return new Promise((resolve) => {
+                    const tx = db.transaction('tracks', 'readwrite');
+                    const store = tx.objectStore('tracks');
+                    const req = store.delete(String(id));
+                    req.onsuccess = () => resolve(true);
+                    req.onerror = () => resolve(false);
+                });
+            } catch (e) {
+                return false;
+            }
+        }
+    };
+
+    // ========================================================
+    // STRICT LANGUAGE & MOOD RECOGNITION ENGINE
+    // ========================================================
+    function detectTrackLanguageAndMood(title = '', artist = '') {
+        const text = `${title} ${artist}`.toLowerCase();
+        
+        // Punjabi Check
+        if (/karan aujla|diljit|sidhu moose|ap dhillon|shubh|badshah|honey singh|ammy virk|b praak|jassi|gippy|harrdy|parmish|jatt|punjabi|tarsem/.test(text)) {
+            return {
+                language: 'punjabi',
+                mood: 'punjabi',
+                clusterQueries: [
+                    'Diljit Dosanjh Karan Aujla hits',
+                    'AP Dhillon Shubh Punjabi trap',
+                    'Sidhu Moose Wala bangers'
+                ]
+            };
+        }
+
+        // Bollywood / Hindi Romantic & Soulful Check
+        if (/arijit|atif aslam|shreya ghoshal|mohit chauhan|jubin|armaan malik|darshan raval|pritam|kk|vishal mishra|neha kakkar|sunidhi|sonu nigam|kumar sanu|udit narayan|alka yagnik|bollywood|tum hi ho|kesariya|channa mereya|raataan|ishq|mohabbat|dil|pyaar/.test(text)) {
+            return {
+                language: 'hindi',
+                mood: 'bollywood_romantic',
+                clusterQueries: [
+                    'Arijit Singh Atif Aslam soulful hits',
+                    'Heartfelt Bollywood love melodies',
+                    'Pritam KK romantic favorites'
+                ]
+            };
+        }
+
+        // English / Western Acoustic & Ballad Check (e.g. Stephen Sanchez, Laufey, Cigarettes After Sex)
+        const isEnglishAcoustic = /stephen sanchez|until i found you|laufey|cigarettes after sex|ricky montgomery|conan gray|jvke|golden hour|alec benjamin|dean lewis|ruth b|d4vd|acoustic|ballad/.test(text);
+        if (isEnglishAcoustic) {
+            return {
+                language: 'english',
+                mood: 'indie_romantic',
+                clusterQueries: [
+                    'Laufey Stephen Sanchez acoustic love',
+                    'JVKE Ricky Montgomery Cigarettes After Sex',
+                    'Conan Gray Alec Benjamin acoustic vibes',
+                    'Sweet indie retro love ballads'
+                ]
+            };
+        }
+
+        // English Synthwave / Retro R&B (The Weeknd, Daft Punk)
+        const isSynthwave = /the weeknd|daft punk|kavinsky|dua lipa|post malone|synthwave|retro|starboy|midnight city|blinding lights/.test(text);
+        if (isSynthwave) {
+            return {
+                language: 'english',
+                mood: 'synth_pop',
+                clusterQueries: [
+                    'The Weeknd Daft Punk synthwave',
+                    'Midnight electro synth pop hits',
+                    'Dua Lipa Post Malone retro pop'
+                ]
+            };
+        }
+
+        // Global Pop (Taylor Swift, Billie Eilish, Olivia Rodrigo)
+        const isGlobalPop = /taylor swift|olivia rodrigo|billie eilish|ariana grande|sabrina carpenter|ed sheeran|harry styles|shawn mendes|pop/.test(text);
+        if (isGlobalPop) {
+            return {
+                language: 'english',
+                mood: 'global_pop',
+                clusterQueries: [
+                    'Taylor Swift Olivia Rodrigo pop hits',
+                    'Billie Eilish Sabrina Carpenter pop favorites',
+                    'Billboard Hot 100 global hits'
+                ]
+            };
+        }
+
+        // Default based on Latin/English characters vs Devnagari
+        const hasIndianScript = /[\u0900-\u097F\u0A00-\u0A7F]/.test(title);
+        if (!hasIndianScript && /^[a-zA-Z0-9\s.,'()\-&]+$/.test(title)) {
+            return {
+                language: 'english',
+                mood: 'english_general',
+                clusterQueries: [
+                    `${artist} hits`,
+                    `${artist} radio`,
+                    'Global English acoustic pop'
+                ]
+            };
+        }
+
+        return {
+            language: 'hindi',
+            mood: 'bollywood_general',
+            clusterQueries: [
+                `${artist} radio`,
+                `${artist} hits`
+            ]
+        };
+    }
+
     async function clientSaavnRecommendations(artist, title, currentId) {
         const recommendations = [];
         const seenTitles = new Set([(title || '').toLowerCase().replace(/\s*[\(\[].*?[\)\]]/g, '').trim()]);
         const seenIds = new Set([String(currentId || '')]);
 
-        // Never replay songs that have already played in this listening session
         if (window.playedTrackIds) {
             window.playedTrackIds.forEach(id => seenIds.add(String(id)));
         }
@@ -3246,7 +3551,39 @@
             window.playedTrackTitles.forEach(t => seenTitles.add(t.toLowerCase().trim()));
         }
 
-        // 1. TIER 1: JioSaavn Real AI Song-Station Recommendation Engine (reco.getreco)
+        const trackProfile = detectTrackLanguageAndMood(title, artist);
+        const targetLang = trackProfile.language;
+
+        // Helper to validate if song matches mood/language
+        function isLanguageMatch(songItem) {
+            if (!songItem) return false;
+            const songTitle = (songItem.title || '').toLowerCase();
+            const songArtist = (songItem.artist || songItem.subtitle || '').toLowerCase();
+            const songText = `${songTitle} ${songArtist}`;
+
+            if (targetLang === 'english') {
+                // Strictly exclude Hindi, Punjabi, or Devnagari/Gurmukhi text
+                if (/[\u0900-\u097F\u0A00-\u0A7F]/.test(songItem.title)) return false;
+                if (/arijit|diljit|karan aujla|sidhu|atif|shreya|pritam|badshah|honey singh|kumar sanu|alka yagnik|punjabi|bollywood|hindi|bhojpuri/.test(songText)) {
+                    return false;
+                }
+                return true;
+            }
+
+            if (targetLang === 'punjabi') {
+                return /diljit|karan aujla|sidhu|ap dhillon|shubh|ammy|b praak|gippy|harrdy|parmish|jatt|punjabi|banger/.test(songText)
+                    || /[\u0A00-\u0A7F]/.test(songItem.title);
+            }
+
+            if (targetLang === 'hindi') {
+                if (/karan aujla|sidhu moose|ap dhillon|shubh/.test(songText)) return false;
+                return true;
+            }
+
+            return true;
+        }
+
+        // 1. TIER 1: JioSaavn Real AI Song-Station Recommendation Engine
         if (currentId && !String(currentId).startsWith('sp_')) {
             try {
                 const recoUrl = `https://www.jiosaavn.com/api.php?__call=reco.getreco&api_version=4&_format=json&_marker=0&ctx=android&pid=${encodeURIComponent(currentId)}`;
@@ -3255,6 +3592,8 @@
 
                 for (const item of list) {
                     try {
+                        if (!isLanguageMatch(item)) continue; // STRICT LANGUAGE FILTER!
+
                         const more = item.more_info || {};
                         const encUrl = more.encrypted_media_url;
                         if (!encUrl) continue;
@@ -3295,51 +3634,16 @@
             }
         }
 
-        // 2. TIER 2: Vibe & Acoustic Cluster Discovery (Fallback/Supplement)
+        // 2. TIER 2: Vibe & Acoustic Cluster Discovery
         if (recommendations.length < 12) {
-            let vibeQueries = [];
-            const combinedText = `${artist} ${title}`.toLowerCase();
+            const queries = trackProfile.clusterQueries || [`${artist} radio`];
 
-            if (/karan aujla|diljit|sidhu moose|ap dhillon|shubh|badshah|honey singh|divine|king|punjabi|jatt/.test(combinedText)) {
-                vibeQueries = [
-                    `${artist} radio`,
-                    `${artist} top hits`,
-                    "Diljit Dosanjh Karan Aujla hits",
-                    "AP Dhillon Shubh Punjabi trap"
-                ];
-            } else if (/arijit|atif aslam|shreya ghoshal|mohit chauhan|jubin|armaan malik|darshan raval|pritam|kk|vishal mishra|romantic|slowed|sad/.test(combinedText)) {
-                vibeQueries = [
-                    `${artist} romantic songs`,
-                    "Arijit Singh Atif Aslam soulful hits",
-                    "Heartfelt Bollywood love melodies"
-                ];
-            } else if (/the weeknd|daft punk|kavinsky|dua lipa|post malone|synthwave|retro|starboy/.test(combinedText)) {
-                vibeQueries = [
-                    `${artist} radio`,
-                    "The Weeknd Daft Punk synthwave",
-                    "Midnight electro synth pop hits"
-                ];
-            } else if (/lo-fi|lofi|chill|sleep|relax|study|reverb/.test(combinedText)) {
-                vibeQueries = [
-                    "lo-fi beats to relax",
-                    "hindi lo-fi slowed reverb hits"
-                ];
-            } else if (/taylor swift|drake|travis scott|billie eilish|justin bieber|ed sheeran|pop|hip hop/.test(combinedText)) {
-                vibeQueries = [
-                    `${artist} radio`,
-                    "Billboard Hot 100 global hits"
-                ];
-            } else {
-                vibeQueries = [
-                    `${artist} radio`,
-                    `${artist} best hits`
-                ];
-            }
-
-            for (const q of vibeQueries) {
+            for (const q of queries) {
                 if (recommendations.length >= 16) break;
-                const hits = await clientSaavnSearch(q, 6);
+                const hits = await clientSaavnSearch(q, 8);
                 for (const s of hits) {
+                    if (!isLanguageMatch(s)) continue; // STRICT FILTER
+
                     const sId = String(s.id);
                     const normTitle = s.title.toLowerCase().replace(/\s*[\(\[].*?[\)\]]/g, '').trim();
                     if (!seenIds.has(sId) && !seenTitles.has(normTitle)) {
@@ -3353,7 +3657,7 @@
 
         return {
             success: true,
-            seed: { artist: artist, title: title },
+            seed: { artist: artist, title: title, mood: trackProfile.mood, language: targetLang },
             results: recommendations.slice(0, 16)
         };
     }
@@ -3625,8 +3929,7 @@
             matchedSongs.push(...chunkResults);
         }
 
-        const validMatches = matchedSongs.filter(s => s && s.audioUrl);
-        const finalTracks = validMatches.length > 0 ? validMatches : matchedSongs;
+        const finalTracks = matchedSongs.filter(Boolean);
 
         return {
             success: true,
@@ -3777,9 +4080,9 @@
     // DYNAMIC TASTE & MOOD PROFILE ADAPTATION ENGINE
     // ========================================================
     let userTasteProfile = JSON.parse(localStorage.getItem('jamio_user_taste_profile') || JSON.stringify({
-        artists: { 'Arijit Singh': 4 },
+        artists: {},
         recentPlays: [],
-        activeMood: 'romantic'
+        activeMood: null
     }));
 
     function recordSongPlay(track) {
@@ -3816,6 +4119,40 @@
         refreshPersonalizedHome(false);
     }
 
+    function renderHomeJumpBackIn() {
+        const sec = document.getElementById('homeJumpBackInSection');
+        const carousel = document.getElementById('homeJumpBackInCarousel');
+        if (!sec || !carousel) return;
+
+        const recents = (userTasteProfile && userTasteProfile.recentPlays) ? userTasteProfile.recentPlays : [];
+        if (!recents || recents.length === 0) {
+            sec.style.display = 'none';
+            return;
+        }
+
+        sec.style.display = 'block';
+        carousel.innerHTML = '';
+        const fallbackCover = 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400';
+
+        recents.slice(0, 10).forEach(song => {
+            const card = document.createElement('div');
+            card.className = 'carousel-card';
+            const coverSrc = song.coverUrl || fallbackCover;
+            card.innerHTML = `
+                <div class="carousel-thumb-box">
+                    <img src="${coverSrc}" class="carousel-thumb" alt="${song.title}" onerror="this.src='${fallbackCover}'">
+                    <div class="carousel-play-overlay"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="carousel-title">${song.title}</div>
+                <div class="carousel-desc">${song.artist || 'Artist'}</div>
+            `;
+            card.onclick = () => {
+                playTrack(0, [song], true);
+            };
+            carousel.appendChild(card);
+        });
+    }
+
     async function refreshPersonalizedHome(reloadSongList = false) {
         const topArtistsList = Object.entries(userTasteProfile.artists || {})
             .sort((a, b) => b[1] - a[1])
@@ -3825,6 +4162,7 @@
 
         const currentMood = userTasteProfile.activeMood || 'romantic';
 
+        renderHomeJumpBackIn();
         try {
             const data = await jamioFetchApi('vibe-feed', { mood: currentMood, artists: topArtistsList });
             if (data && data.success) {
@@ -3965,8 +4303,10 @@
         div.onclick = () => {
             if (contextPlaylistId === 'search_results' || list === window.currentSearchResults) {
                 addSongToRecentSearches(song);
+                playTrack(0, [song], true);
+            } else {
+                playTrack(idx, list);
             }
-            playTrack(idx, list);
         };
 
         let actionButtons = '';
@@ -4089,7 +4429,7 @@
             window.checkFastScrubberVisibility?.();
         }
 
-        // Set Audio & Play (prefer local offline audio if available)
+        // Set Audio & Play (Check JamioAudioDB Blob first for 100% offline playback on iOS/Android)
         const isOffline = downloadedSongs.some(s => s.id === track.id);
         const cleanId = (track.id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
         const offlineUrl = 'http://127.0.0.1:8116/offline_audio/track_' + cleanId + '.mp3';
@@ -4098,6 +4438,26 @@
             audio.src = offlineUrl;
         } else {
             audio.src = track.audioUrl || offlineUrl;
+        }
+
+        // Check local IndexedDB Blob storage
+        JamioAudioDB.getTrackBlob(track.id).then(blob => {
+            if (blob) {
+                audio.src = URL.createObjectURL(blob);
+                audio.play().catch(() => {});
+            }
+        }).catch(() => {});
+
+        // On-the-fly resolution for tracks that do not have audioUrl yet (e.g. from Spotify import)
+        if (!audio.src || audio.src === window.location.href || audio.src.endsWith('/')) {
+            clientSaavnSearch(`${track.title} ${track.artist}`, 1).then(hits => {
+                if (hits && hits.length > 0 && hits[0].audioUrl) {
+                    track.audioUrl = hits[0].audioUrl;
+                    track.coverUrl = track.coverUrl || hits[0].coverUrl;
+                    audio.src = track.audioUrl;
+                    audio.play().catch(() => {});
+                }
+            }).catch(() => {});
         }
 
         audio.onerror = () => {
@@ -4860,6 +5220,35 @@
     // ==========================================
     // DYNAMIC QUEUE ENGINE & REORDERING
     // ==========================================
+    let queueToastTimeout = null;
+    function showQueueToast(song) {
+        const toast = document.getElementById('jamioQueueToast');
+        if (!toast) return;
+        const sub = document.getElementById('queueToastSong');
+        if (sub) sub.innerText = `${song.title} • ${song.artist || 'Artist'}`;
+        toast.classList.add('visible');
+        clearTimeout(queueToastTimeout);
+        queueToastTimeout = setTimeout(() => {
+            toast.classList.remove('visible');
+        }, 3600);
+    }
+
+    function openQueueFromToast() {
+        const toast = document.getElementById('jamioQueueToast');
+        if (toast) toast.classList.remove('visible');
+        fullPlayer.classList.add('expanded');
+        document.querySelector('.device-wrapper')?.classList.add('player-open');
+        toggleTracklistDrawer(true);
+    }
+    window.openQueueFromToast = openQueueFromToast;
+
+    function updateQueueCountBadge() {
+        const badge = document.getElementById('queueCountBadge');
+        if (!badge) return;
+        const upNextCount = Math.max(0, currentPlaylist.length - 1 - currentIndex);
+        badge.innerText = upNextCount > 99 ? '99+' : upNextCount;
+        badge.style.display = upNextCount > 0 ? 'inline-flex' : 'none';
+    }
     function addToQueue(event, songIdOrObj) {
         if (event) event.stopPropagation();
 
@@ -4898,13 +5287,14 @@
             : currentPlaylist.length;
 
         currentPlaylist.splice(insertPos, 0, song);
+        updateQueueCountBadge();
 
         const drawer = document.getElementById('erasTracklistDrawer');
         if (drawer && drawer.style.display !== 'none') {
             renderErasTracklistDrawer();
         }
 
-        showToast(`✓ Added to Queue: ${song.title}`);
+        showQueueToast(song);
     }
 
     function moveQueueSong(fromIdx, toIdx, event) {
@@ -5036,6 +5426,34 @@
                 if (e.target.closest('.eras-drawer-actions') || e.target.closest('.eras-drag-handle')) return;
                 playTrack(idx, currentPlaylist, false, !isVibeRadioActive);
             };
+
+            // Mobile Touch Drag & Drop Reordering on .eras-drag-handle
+            const dragHandle = item.querySelector('.eras-drag-handle');
+            if (dragHandle) {
+                let touchStartY = 0;
+                let activeFromIdx = idx;
+                dragHandle.addEventListener('touchstart', (e) => {
+                    touchStartY = e.touches[0].clientY;
+                    item.classList.add('dragging');
+                }, { passive: true });
+
+                dragHandle.addEventListener('touchmove', (e) => {
+                    const currentY = e.touches[0].clientY;
+                    const diffY = currentY - touchStartY;
+                    if (Math.abs(diffY) > 38) {
+                        const targetIdx = diffY > 0 ? activeFromIdx + 1 : activeFromIdx - 1;
+                        if (targetIdx >= 0 && targetIdx < currentPlaylist.length) {
+                            moveQueueSong(activeFromIdx, targetIdx);
+                            activeFromIdx = targetIdx;
+                            touchStartY = currentY;
+                        }
+                    }
+                }, { passive: true });
+
+                dragHandle.addEventListener('touchend', () => {
+                    item.classList.remove('dragging');
+                });
+            }
 
             // HTML5 Drag & Drop (Desktop)
             item.addEventListener('dragstart', (e) => {
@@ -5419,8 +5837,8 @@
         reader.readAsText(file);
     }
 
-    // Offline Downloads (Spotify Premium Simulation with Real Native Disk Storage)
-    function toggleDownload(songId) {
+    // Offline Downloads (100% Offline with JamioAudioDB & Native Bridge)
+    async function toggleDownload(songId) {
         if (!songId) return;
         const song = findSongAcrossPlaylists(songId);
         if (!song) {
@@ -5432,6 +5850,7 @@
         const existsIdx = downloadedSongs.findIndex(s => String(s.id) === strId);
         if (existsIdx >= 0) {
             downloadedSongs.splice(existsIdx, 1);
+            try { await JamioAudioDB.deleteTrackAudio(strId); } catch(e){}
             if (window.AndroidBridge && typeof window.AndroidBridge.deleteDownloadedSong === 'function') {
                 window.AndroidBridge.deleteDownloadedSong(strId);
             }
@@ -5446,6 +5865,27 @@
             downloadedSongs.push(offlineItem);
             registerKnownSongs(offlineItem);
 
+            showToast(`Downloading "${song.title}" for offline listening...`);
+
+            if (song.audioUrl) {
+                fetch(song.audioUrl)
+                    .then(res => {
+                        if (!res.ok) throw new Error('HTTP ' + res.status);
+                        return res.blob();
+                    })
+                    .then(blob => {
+                        return JamioAudioDB.saveTrackAudio(strId, blob, song);
+                    })
+                    .then(() => {
+                        console.log('Saved to JamioAudioDB offline store:', strId);
+                        showToast(`✓ "${song.title}" saved offline!`);
+                        renderDownloadsTab();
+                    })
+                    .catch(err => {
+                        console.warn('JamioAudioDB download error:', err);
+                    });
+            }
+
             if (window.AndroidBridge && typeof window.AndroidBridge.downloadSong === 'function') {
                 window.AndroidBridge.downloadSong(
                     strId,
@@ -5456,7 +5896,6 @@
                     song.coverUrl || ''
                 );
             }
-            showToast(`Downloading "${song.title}" for offline listening...`);
         }
 
         localStorage.setItem('jamio_offline_songs', JSON.stringify(downloadedSongs));
@@ -6030,7 +6469,7 @@
         renderSongList('downloadedSongsList', downloadedSongs);
     }
 
-    // Navigation Tabs Switcher
+    // Navigation Tabs Switcher (Smooth Apple-Style View Transitions)
     document.querySelectorAll('.nav-item').forEach(item => {
         item.onclick = () => {
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -6041,23 +6480,40 @@
             const ca = document.querySelector('.content-area');
             if (ca) ca.scrollTop = 0;
 
-            document.getElementById('homeView').style.display = 'none';
-            document.getElementById('searchView').style.display = 'none';
-            document.getElementById('playlistsView').style.display = 'none';
-            document.getElementById('playlistDetailView').style.display = 'none';
-            document.getElementById('downloadsView').style.display = 'none';
+            const panels = [
+                document.getElementById('homeView'),
+                document.getElementById('searchView'),
+                document.getElementById('playlistsView'),
+                document.getElementById('playlistDetailView'),
+                document.getElementById('downloadsView')
+            ];
+            panels.forEach(p => {
+                if (p) {
+                    p.classList.remove('active');
+                    p.style.display = 'none';
+                }
+            });
+
+            let targetPanel = document.getElementById('homeView');
+            if (tab === 'search') targetPanel = document.getElementById('searchView');
+            else if (tab === 'playlists') targetPanel = document.getElementById('playlistsView');
+            else if (tab === 'downloads') targetPanel = document.getElementById('downloadsView');
+
+            if (targetPanel) {
+                targetPanel.style.display = 'block';
+                requestAnimationFrame(() => {
+                    targetPanel.classList.add('active');
+                });
+            }
 
             if (tab === 'home') {
-                document.getElementById('homeView').style.display = 'block';
+                refreshPersonalizedHome(false);
             } else if (tab === 'search') {
-                document.getElementById('searchView').style.display = 'block';
                 renderRecentSearches();
-                document.getElementById('mainSearchInput').focus();
+                document.getElementById('mainSearchInput')?.focus();
             } else if (tab === 'playlists') {
-                document.getElementById('playlistsView').style.display = 'block';
                 renderPlaylistsTab();
             } else if (tab === 'downloads') {
-                document.getElementById('downloadsView').style.display = 'block';
                 renderDownloadsTab();
             }
             window.checkFastScrubberVisibility?.();
@@ -6189,7 +6645,7 @@
             row.onclick = () => {
                 // Tapping immediately plays song and refreshes it to top of recent searches
                 addSongToRecentSearches(song);
-                playTrack(0, [song, ...recentPlayedSearches.filter(s => s.id !== song.id)], true);
+                playTrack(0, [song], true);
             };
 
             const removeBtn = row.querySelector('.btn-remove-recent');
